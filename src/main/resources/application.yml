@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: wsd-web-crawling
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        "[format_sql]": true
+        "[default_batch_fetch_size]": 500
+        "[highlight_sql]": true
+
+logging:
+  level:
+    com:
+      wsd:
+        web:
+          crawling: DEBUG
+    org:
+      springframework:
+        security: DEBUG

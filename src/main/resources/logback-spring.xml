@@ -1,0 +1,31 @@
+<configuration scan="true" scanPeriod="30 seconds">
+
+<appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <jsonGeneratorDecorator class="com.github.skjolber.decorators.SyntaxHighlightingDecorator">
+          <syntaxHighlighterFactory class="com.github.skjolber.decorators.factory.LogLevelSyntaxHighlighterFactory">
+            <level>
+                <info>green</info>
+                <warning>yellow</warning>
+                <error>red</error>
+                <debug>blue</debug>
+            </level>
+            <message>highIntensity blue</message>
+            <thread>green</thread>
+          </syntaxHighlighterFactory>
+        </jsonGeneratorDecorator>
+
+      <fieldNames>
+        <levelValue>[ignore]</levelValue>
+        <version>[ignore]</version>
+        <logger>logger</logger>
+        <thread>thread</thread>
+      </fieldNames>
+    </encoder>
+</appender>
+
+    <!-- 루트 로거 설정 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT_JSON" />
+    </root>
+</configuration>
