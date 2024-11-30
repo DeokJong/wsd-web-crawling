@@ -1,0 +1,42 @@
+{"properties": [
+  {
+    "name": "jwt.access-secret",
+    "type": "java.lang.String",
+    "description": "JWT 액세스 비밀 키"
+  },
+  {
+    "name": "jwt.access-token-validity-in-seconds",
+    "type": "java.lang.String",
+    "description": "JWT 액세스 토큰의 유효 기간(초)"
+  },  
+  {
+    "name": "jwt.refresh-secret",
+    "type": "java.lang.String",
+    "description": "JWT 리프레시 비밀 키"
+  },
+  {
+    "name": "jwt.refresh-token-validity-in-seconds",
+    "type": "java.lang.String",
+    "description": "JWT 리프레시 토큰의 유효 기간(초)"
+  },
+  {
+    "name": "jwt.authorization-header-access",
+    "type": "java.lang.String",
+    "description": "JWT 액세스 토큰을 위한 인증 헤더"
+  },
+  {
+    "name": "jwt.authorization-header-refresh",
+    "type": "java.lang.String",
+    "description": "JWT 리프레시 토큰을 위한 인증 헤더"
+  },
+  {
+    "name": "allowed.origins",
+    "type": "java.lang.String",
+    "description": "허용된 출처 목록"
+  },
+  {
+    "name": "allowed.methods",
+    "type": "java.lang.String",
+    "description": "허용된 HTTP 메서드 목록"
+  }
+]}
