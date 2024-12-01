@@ -157,7 +157,6 @@ public class JsonWebTokenProvider {
    * @return 유효성 검사 결과
    */
   public boolean validateRefreshToken(String refreshToken) {
-    log.info("Validating refresh token: {}", refreshToken);
     try {
       jwtParser.parseClaimsJws(refreshToken);
       return true;

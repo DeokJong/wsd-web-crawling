@@ -55,7 +55,6 @@ public class AuthService {
       response.addCookie(tokenProvider.createCookie(tokenProvider.AUTHORIZATION_HEADER_REFRESH, refreshToken,
           tokenProvider.refreshTokenValidityInMilliseconds));
     } catch (AuthenticationException e) {
-      log.error("Authentication failed for user: {}", loginRequest.getUsername(), e);
       throw e;
     }
   }

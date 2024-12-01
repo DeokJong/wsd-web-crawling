@@ -17,10 +17,10 @@ logging:
     com:
       wsd:
         web:
-          crawling: TRACE
+          crawling: INFO
     org:
       springframework:
-        security: TRACE
+        security: INFO
 
 jwt:
   access-secret: OtItGKqtKQiR1loQhhVkfZAnzMfoNmQgH9pEdKt4nSQ=

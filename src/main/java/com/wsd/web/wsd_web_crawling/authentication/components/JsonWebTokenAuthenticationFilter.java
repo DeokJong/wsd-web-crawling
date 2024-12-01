@@ -1,12 +1,15 @@
 package com.wsd.web.wsd_web_crawling.authentication.components;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -30,9 +33,32 @@ public class JsonWebTokenAuthenticationFilter extends OncePerRequestFilter {
   private String AUTHORIZATION_HEADER_ACCESS;
   private final JsonWebTokenProvider tokenProvider;
 
+  // 필터를 제외할 경로 설정
+  private static final List<String> EXCLUDED_PATHS = List.of(
+      "/api/auth/**",
+      "/api/sign-up",
+      "/api/public/**",
+      "/swagger-ui/**",
+      "/swagger-ui.html",
+      "/v3/api-docs/**",
+      "/swagger-resources/**");
+  private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+  /**
+   * 특정 경로에 대해 필터링 제외
+   *
+   * @param request HTTP 요청
+   * @return 필터링 제외 여부
+   */
+  @Override
+  protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+    String requestPath = request.getRequestURI();
+    return EXCLUDED_PATHS.stream().anyMatch(path -> pathMatcher.match(path, requestPath));
+  }
+
   /**
    * Request에서 토큰 추출
-   * 
+   *
    * @param request HTTP 요청
    * @return 추출된 JWT 토큰 문자열 또는 null
    */
@@ -52,7 +78,7 @@ public class JsonWebTokenAuthenticationFilter extends OncePerRequestFilter {
 
   /**
    * 필터링 로직 구현
-   * 
+   *
    * @param request     HTTP 요청
    * @param response    HTTP 응답
    * @param filterChain 필터 체인
@@ -75,9 +101,7 @@ public class JsonWebTokenAuthenticationFilter extends OncePerRequestFilter {
         log.info("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}", authentication.getName(),
             request.getRequestURI());
       }
-    } catch (Exception e) {
-      // 예외 발생 시 로깅 및 SecurityContext 초기화
-      log.error("JWT 토큰 인증 과정에서 에러가 발생했습니다: {}", e.getMessage());
+    } catch (AuthenticationException e) {
       SecurityContextHolder.clearContext();
     }
 
