@@ -22,6 +22,7 @@ services:
 
   springboot-container:
     build:
+      context: .
       dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker

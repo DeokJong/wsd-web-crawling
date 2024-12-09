@@ -3,6 +3,7 @@ package com.wsd.web.wsd_web_crawling.common.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import com.wsd.web.wsd_web_crawling.common.domain.Account;
 
@@ -10,6 +11,7 @@ import com.wsd.web.wsd_web_crawling.common.domain.Account;
  * AccountRepository는 Account 엔티티에 대한 CRUD 작업을 수행하는 인터페이스입니다.
  * 이 인터페이스는 Spring Data JPA의 JpaRepository를 확장합니다.
  */
+@Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
     /**
      * 주어진 사용자 이름으로 Account를 찾습니다.

@@ -26,6 +26,7 @@ import jakarta.transaction.Transactional;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class AuthService {
 
   private final AuthenticationManager authenticationManager;

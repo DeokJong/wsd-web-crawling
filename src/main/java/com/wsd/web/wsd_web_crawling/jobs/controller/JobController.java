@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
 import com.wsd.web.wsd_web_crawling.common.dto.Response;
 import com.wsd.web.wsd_web_crawling.jobs.dto.JobsRequest;
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobsSummaryResponse;
 import com.wsd.web.wsd_web_crawling.jobs.service.JobCrawlingService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -18,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 // - 채용 공고 API (/jobs)
 
@@ -30,7 +33,7 @@ import java.util.List;
 //     - 지역별[] // location
 //     - 경력별[] // education
 //     - 급여별[]
-//     - 기술스택별[] // sector 
+//     - 기술스택별[] // sector
 
 //   - 검색 기능 (필수):
 //     - 키워드 검색[]
@@ -63,22 +66,25 @@ public class JobController {
   @GetMapping
   public ResponseEntity<Response<?>> getJobs(@RequestBody JobsRequest jobsRequest) {
     try {
-      List<JobPosting> jobPostings = jobCrawlingService.crawlSaramin(jobsRequest); // 크롤링 메서드 호출
-      log.info("jobPostings: {}", jobPostings);
-
-      Response<List<JobPosting>> body = Response.createResponse(
+      List<JobPosting> jobPostings = jobCrawlingService.crawlSaramin(jobsRequest);
+      List<JobsSummaryResponse> jobsSummaryResponses = jobPostings.stream()
+        .map(posting -> JobsSummaryResponse.builder()
+          .jobId(posting.getId())
+          .title(posting.getTitle())
+          .company(posting.getCompany())
+          .link(posting.getLink())
+          .sector(posting.getSector())
+          .build())
+        .collect(Collectors.toList());
+      Response<List<JobsSummaryResponse>> body = Response.createResponse(
           HttpStatus.OK.value(),
           "채용 공고 조회 성공",
-          jobPostings
-      );
-
+          jobsSummaryResponses);
       return new ResponseEntity<>(body, HttpStatus.OK);
     } catch (IOException e) {
-      e.printStackTrace();
       Response<?> body = Response.createResponseWithoutData(
           HttpStatus.INTERNAL_SERVER_ERROR.value(),
-          "채용 공고 조회 실패"
-      );
+          "채용 공고 조회 실패");
       return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -86,10 +92,18 @@ public class JobController {
   // 공고 상세 조회
   @GetMapping("/{id}")
   public ResponseEntity<Response<?>> getJob(@PathVariable Long id) {
-    Response<?> body = Response.createResponseWithoutData(
-        HttpStatus.OK.value(),
-        "채용 공고 상세 조회 성공");
-
-    return new ResponseEntity<>(body, HttpStatus.OK);
+    try {
+      Optional<JobPosting> jobPosting = jobCrawlingService.crawlSaraminDetail(id);
+      Response<JobPosting> body = Response.createResponse(
+          HttpStatus.OK.value(),
+          "채용 공고 상세 조회 성공",
+          jobPosting.get());
+      return new ResponseEntity<>(body, HttpStatus.OK);
+    } catch (IOException e) {
+      Response<?> body = Response.createResponseWithoutData(
+          HttpStatus.INTERNAL_SERVER_ERROR.value(),
+        "채용 공고 상세 조회 실패");
+    return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
