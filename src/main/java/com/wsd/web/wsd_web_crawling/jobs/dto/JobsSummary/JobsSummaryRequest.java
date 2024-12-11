@@ -20,7 +20,7 @@ public class JobsSummaryRequest {
   private String keyword;
   @Default
   @Schema(description = "지역", example = "서울")
-  private String loc_cd = "";
+  private String location = "";
 
   /**
    * JobsSummaryRequest를 Pageable 객체로 변환하는 메소드

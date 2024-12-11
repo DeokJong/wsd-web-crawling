@@ -5,9 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
-import com.wsd.web.wsd_web_crawling.common.dto.JobPostingRequest;
 import com.wsd.web.wsd_web_crawling.common.repository.JobPostingRepository;
 import com.wsd.web.wsd_web_crawling.jobs.dto.JobsSummary.JobsSummaryRequest;
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobRequest;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +22,20 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class JobService {
   private final JobPostingRepository jobPostingRepository;
+  // private final JobCrawlingService jobCrawlingService;
 
   public Page<JobPosting> getJobPostings(JobsSummaryRequest jobsRequest) {
     Pageable pageable = jobsRequest.toPageable();
-    return jobPostingRepository.findByKeywordInSector(jobsRequest.getKeyword(), pageable);
+    Page<JobPosting> jobPostings = jobPostingRepository.findByKeywordAndLocation(
+        jobsRequest.getKeyword(),
+        jobsRequest.getLocation(),
+        pageable);
+    if (jobPostings.getTotalElements() < 100) {
+      log.info("crawling start but not implemented");
+      // jobCrawlingService.crawlSaramin(jobsRequest, 10);
+    }
+
+    return jobPostings;
   }
 
   public JobPosting getJobPostingById(Long id) {
@@ -40,17 +50,8 @@ public class JobService {
     }
   }
 
-  public JobPosting createJobPosting(JobPostingRequest request) {
-    JobPosting jobPosting = JobPosting.builder()
-        .uniqueIdentifier(request.getTitle() + request.getCompany())
-        .location(request.getLocation())
-        .experience(request.getExperience())
-        .education(request.getEducation())
-        .employmentType(request.getEmploymentType())
-        .deadline(request.getDeadline())
-        .sector(request.getSector())
-        .salary(request.getSalary())
-        .build();
+  public JobPosting createJobPosting(JobRequest request) {
+    JobPosting jobPosting = getJobPostingFromRequest(request);
 
     if (jobPostingRepository.existsByUniqueIdentifier(jobPosting.getUniqueIdentifier())) {
       throw new IllegalArgumentException("이미 존재하는 공고입니다.");
@@ -68,19 +69,28 @@ public class JobService {
     return false;
   }
 
-  public JobPosting updateJobPosting(Long id, JobPostingRequest request) {
+  public JobPosting updateJobPosting(Long id, JobRequest request) {
     JobPosting jobPosting = jobPostingRepository.findById(id).orElse(null);
     if (jobPosting != null) {
-      jobPosting.setLocation(request.getLocation());
-      jobPosting.setExperience(request.getExperience());
-      jobPosting.setEducation(request.getEducation());
-      jobPosting.setEmploymentType(request.getEmploymentType());
-      jobPosting.setDeadline(request.getDeadline());
-      jobPosting.setSector(request.getSector());
-      jobPosting.setSalary(request.getSalary());
+      jobPosting.update(request);
       return jobPostingRepository.save(jobPosting);
     }
     return null;
   }
-}
 
+  private JobPosting getJobPostingFromRequest(JobRequest request) {
+    return JobPosting.builder()
+        .title(request.getTitle())
+        .company(request.getCompany())
+        .link(request.getLink())
+        .uniqueIdentifier(request.getTitle() + request.getCompany())
+        .location(request.getLocation())
+        .experience(request.getExperience())
+        .education(request.getEducation())
+        .employmentType(request.getEmploymentType())
+        .deadline(request.getDeadline())
+        .sector(request.getSector())
+        .salary(request.getSalary())
+        .build();
+  }
+}

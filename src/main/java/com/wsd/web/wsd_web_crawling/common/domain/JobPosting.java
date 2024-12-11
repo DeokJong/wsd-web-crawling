@@ -1,5 +1,7 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobRequest;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -92,4 +94,17 @@ public class JobPosting {
      */
     @Column
     private int viewCount;
+
+    public void update(JobRequest request) {
+      this.title = request.getTitle();
+      this.company = request.getCompany();
+      this.link = request.getLink();
+      this.location = request.getLocation();
+      this.experience = request.getExperience();
+      this.education = request.getEducation();
+      this.employmentType = request.getEmploymentType();
+      this.deadline = request.getDeadline();
+      this.sector = request.getSector();
+      this.salary = request.getSalary();
+    }
 }

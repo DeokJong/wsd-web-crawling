@@ -13,6 +13,7 @@ public class JobsSummaryResponse {
     private String company;
     private String link;
     private String sector;
+    private String location;
 
     public static JobsSummaryResponse from(JobPosting jobPosting) {
         return JobsSummaryResponse.builder()
@@ -21,6 +22,8 @@ public class JobsSummaryResponse {
             .company(jobPosting.getCompany())
             .link(jobPosting.getLink())
             .sector(jobPosting.getSector())
+            .location(jobPosting.getLocation())
             .build();
     }
 }
+

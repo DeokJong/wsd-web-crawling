@@ -36,10 +36,15 @@ public class LocationResolver {
     }
   }
 
-  public String resolve(String key) {
-    if (key == null) {
+  /**
+   * 위치 코드를 입력받아 위치 이름으로 변환하는 메서드이며 해당 메서드는 오로지 크롤링 시 사용되는 메서드입니다.
+   * @param loc_cd 위치 코드
+   * @return 위치 이름
+   */
+  public String resolve(String loc_cd) {
+    if (loc_cd == null) {
       return "";
     }
-    return jsonMap.get(key); // 입력값에 대한 value 리턴
+    return jsonMap.get(loc_cd); // 입력값에 대한 value 리턴
   }
 }
