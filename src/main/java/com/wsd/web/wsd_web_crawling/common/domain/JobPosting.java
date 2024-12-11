@@ -86,4 +86,10 @@ public class JobPosting {
      */
     @Column
     private String salary;
+
+    /**
+     * 조회수
+     */
+    @Column
+    private int viewCount;
 }

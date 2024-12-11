@@ -1,7 +1,7 @@
 package com.wsd.web.wsd_web_crawling.common.repository;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,11 +34,21 @@ public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
     JobPosting findByUniqueIdentifier(String uniqueIdentifier);
 
     /**
-     * Sector 필드에서 주어진 keyword를 포함하는 JobPosting 찾기
+     * 고유 식별자로 JobPosting을 페이징하여 찾기
      *
-     * @param keyword 검색할 키워드
-     * @return 키워드를 포함하는 Sector를 가진 JobPosting 리스트
+     * @param uniqueIdentifier 고유 식별자
+     * @param pageable         페이징 정보
+     * @return 페이징된 JobPosting
+     */
+    Page<JobPosting> findByUniqueIdentifier(String uniqueIdentifier, Pageable pageable);
+
+    /**
+     * Sector 필드에서 주어진 키워드를 포함하는 JobPosting을 페이징하여 찾기
+     *
+     * @param keyword  검색할 키워드
+     * @param pageable 페이징 정보
+     * @return 페이징된 JobPosting 리스트
      */
     @Query("SELECT jp FROM JobPosting jp WHERE jp.sector LIKE %:keyword%")
-    List<JobPosting> findByKeywordInSector(@Param("keyword") String keyword);
+    Page<JobPosting> findByKeywordInSector(@Param("keyword") String keyword, Pageable pageable);
 }

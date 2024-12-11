@@ -15,7 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 @Component
 @RequiredArgsConstructor
-public class JsonResolver {
+public class LocationResolver {
 
   @Value("classpath:constant/LocationCode.json") // JSON 파일 경로 업데이트
   private Resource resource;

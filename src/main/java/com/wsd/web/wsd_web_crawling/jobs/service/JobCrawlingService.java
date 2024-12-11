@@ -1,9 +1,6 @@
 package com.wsd.web.wsd_web_crawling.jobs.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -13,16 +10,14 @@ import org.springframework.stereotype.Service;
 import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
 import com.wsd.web.wsd_web_crawling.common.repository.JobPostingRepository;
 import com.wsd.web.wsd_web_crawling.jobs.components.HtmlParser;
-import com.wsd.web.wsd_web_crawling.jobs.components.JsonResolver;
-import com.wsd.web.wsd_web_crawling.jobs.dto.JobsRequest;
+import com.wsd.web.wsd_web_crawling.jobs.components.LocationResolver;
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobsSummary.JobsSummaryRequest;
+import com.wsd.web.wsd_web_crawling.common.dto.JobPostingRequest;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * JobCrawlingService는 구인 정보를 크롤링하여 데이터베이스에 저장하는 서비스입니다.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -30,27 +25,16 @@ import lombok.extern.slf4j.Slf4j;
 public class JobCrawlingService {
 
   private final JobPostingRepository jobPostingRepository;
-  private final JsonResolver locationResolver;
+  private final LocationResolver locationResolver;
 
-  public List<JobPosting> crawlSaramin(JobsRequest jobsRequest) throws IOException {
-    // 페이지당 데이터 크기
-    int pageSize = 20;
+  public void crawlSaramin(JobsSummaryRequest jobsRequest) throws IOException {
+    crawlSaramin(jobsRequest, 300);
+  }
 
-    // 요청된 페이지 번호 (1부터 시작하도록 보정)
-    int requestedPage = Math.max(jobsRequest.getPage(), 1) - 1;
+  public void crawlSaramin(JobsSummaryRequest jobsRequest, int postingCount) throws IOException {
+    int requestedPage = postingCount / 6; // 한 페이지 크로링당 6개의 데이터를 가져온다.
 
-    // 1. 기존 데이터를 가져오고 20개씩 묶음
-    List<JobPosting> existingJobPostings = jobPostingRepository.findByKeywordInSector(jobsRequest.getKeyword());
-    List<List<JobPosting>> paginatedJobPostings = paginate(existingJobPostings, pageSize);
-
-    // 2. 요청된 페이지 데이터가 존재하면 반환
-    if (requestedPage < paginatedJobPostings.size()) {
-      return paginatedJobPostings.get(requestedPage);
-    }
-
-    // 3. 크롤링 시작 - 부족한 데이터 채우기
-    int requiredDataCount = (requestedPage + 1) * pageSize; // 요청된 페이지까지 필요한 데이터 수
-    for (int pageParams = 1; existingJobPostings.size() < requiredDataCount; pageParams++) {
+    for (int pageParams = 1; pageParams <= requestedPage; pageParams++) {
       String url = "https://www.saramin.co.kr/zf_user/search/recruit?searchType=search"
           + "&searchword=" + jobsRequest.getKeyword()
           + "&recruitPage=" + pageParams
@@ -99,10 +83,6 @@ public class JobCrawlingService {
               .salary(salary)
               .build();
           jobPostingRepository.save(jobPosting);
-          existingJobPostings.add(jobPosting);
-        }
-        if (existingJobPostings.size() >= requiredDataCount) {
-          break;
         }
       }
 
@@ -112,27 +92,66 @@ public class JobCrawlingService {
         Thread.currentThread().interrupt();
       }
     }
-
-    // 4. 업데이트된 데이터를 기반으로 페이지네이션
-    paginatedJobPostings = paginate(existingJobPostings, pageSize);
-
-    // 5. 요청된 페이지 데이터 반환
-    return requestedPage < paginatedJobPostings.size() ? paginatedJobPostings.get(requestedPage) : new ArrayList<>();
   }
 
-  public Optional<JobPosting> crawlSaraminDetail(Long id) throws IOException {
-    return jobPostingRepository.findById(id);
+  // 공고 상세 조회
+  public JobPosting getJobPostingById(Long id) {
+    return jobPostingRepository.findById(id).orElse(null);
   }
 
-  /**
-   * 데이터를 주어진 크기 단위로 묶는 메서드
-   */
-  private List<List<JobPosting>> paginate(List<JobPosting> jobPostings, int pageSize) {
-    List<List<JobPosting>> paginated = new ArrayList<>();
-    for (int i = 0; i < jobPostings.size(); i += pageSize) {
-      int end = Math.min(i + pageSize, jobPostings.size());
-      paginated.add(jobPostings.subList(i, end));
+  // 조회수 증가
+  public void incrementViewCount(Long id) {
+    JobPosting jobPosting = jobPostingRepository.findById(id).orElse(null);
+    if (jobPosting != null) {
+      jobPosting.setViewCount(jobPosting.getViewCount() + 1);
+      jobPostingRepository.save(jobPosting);
     }
-    return paginated;
+  }
+
+  // 공고 등록
+  public JobPosting createJobPosting(JobPostingRequest request) {
+    JobPosting jobPosting = JobPosting.builder()
+        .title(request.getTitle())
+        .company(request.getCompany())
+        .link(request.getLink())
+        .uniqueIdentifier(request.getTitle() + request.getCompany())
+        .location(request.getLocation())
+        .experience(request.getExperience())
+        .education(request.getEducation())
+        .employmentType(request.getEmploymentType())
+        .deadline(request.getDeadline())
+        .sector(request.getSector())
+        .salary(request.getSalary())
+        .viewCount(0)
+        .build();
+    return jobPostingRepository.save(jobPosting);
+  }
+
+  // 공고 수정
+  public JobPosting updateJobPosting(Long id, JobPostingRequest request) {
+    JobPosting existingJob = jobPostingRepository.findById(id).orElse(null);
+    if (existingJob == null) {
+      return null;
+    }
+    existingJob.setTitle(request.getTitle());
+    existingJob.setCompany(request.getCompany());
+    existingJob.setLink(request.getLink());
+    existingJob.setLocation(request.getLocation());
+    existingJob.setExperience(request.getExperience());
+    existingJob.setEducation(request.getEducation());
+    existingJob.setEmploymentType(request.getEmploymentType());
+    existingJob.setDeadline(request.getDeadline());
+    existingJob.setSector(request.getSector());
+    existingJob.setSalary(request.getSalary());
+    return jobPostingRepository.save(existingJob);
+  }
+
+  // 공고 삭제
+  public boolean deleteJobPosting(Long id) {
+    if (!jobPostingRepository.existsById(id)) {
+      return false;
+    }
+    jobPostingRepository.deleteById(id);
+    return true;
   }
 }
