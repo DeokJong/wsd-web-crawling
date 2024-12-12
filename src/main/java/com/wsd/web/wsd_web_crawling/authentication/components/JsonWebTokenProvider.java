@@ -1,7 +1,9 @@
 package com.wsd.web.wsd_web_crawling.authentication.components;
 
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -214,21 +216,14 @@ public class JsonWebTokenProvider {
    * @param request HTTP 요청
    * @return 사용자 이름
    */
-  public String getUsernameFromRequest(HttpServletRequest request) {
-    Cookie[] cookies = request.getCookies();
-    String refreshToken = null;
-
-    for (Cookie cookie : cookies) {
-      if (AUTHORIZATION_HEADER_REFRESH.equals(cookie.getName())) {
-        refreshToken = cookie.getValue();
-      }
-    }
-
-    if (refreshToken != null && validateToken(refreshToken)) {  
-      return jwtParser.parseClaimsJws(refreshToken).getBody().getSubject();
-    }
-
-    return null;
+  public Optional<String> getUsernameFromRequest(HttpServletRequest request) {
+    return Optional.ofNullable(request.getCookies())
+        .flatMap(cookies -> Arrays.stream(cookies)
+            .filter(cookie -> AUTHORIZATION_HEADER_REFRESH.equals(cookie.getName()))
+            .findFirst()
+            .map(Cookie::getValue))
+        .filter(this::validateToken)
+        .map(token -> jwtParser.parseClaimsJws(token).getBody().getSubject());
   }
 
   /**

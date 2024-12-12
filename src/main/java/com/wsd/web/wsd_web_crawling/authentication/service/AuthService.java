@@ -3,6 +3,8 @@ package com.wsd.web.wsd_web_crawling.authentication.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDateTime;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,7 +18,9 @@ import com.wsd.web.wsd_web_crawling.authentication.dto.AccountCreateRequest;
 import com.wsd.web.wsd_web_crawling.authentication.dto.AccountUpdateRequest;
 import com.wsd.web.wsd_web_crawling.authentication.dto.LoginRequest;
 import com.wsd.web.wsd_web_crawling.common.domain.Account;
+import com.wsd.web.wsd_web_crawling.common.domain.Bookmark;
 import com.wsd.web.wsd_web_crawling.common.repository.AccountRepository;
+import com.wsd.web.wsd_web_crawling.common.repository.BookmarkRepository;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +37,7 @@ public class AuthService {
   private final JsonWebTokenProvider tokenProvider;
   private final AccountRepository accountRepository;
   private final PasswordEncoder passwordEncoder;
+  private final BookmarkRepository bookmarkRepository;
 
   /**
    * 사용자 로그인 처리.
@@ -76,10 +81,17 @@ public class AuthService {
    * @param request 사용자 생성 요청 정보
    */
   public void register(AccountCreateRequest request) {
-    accountRepository.save(Account.builder()
+    Account account = accountRepository.save(Account.builder()
         .username(request.getUsername())
         .password(passwordEncoder.encode(request.getPassword()))
         .nickname(request.getNickname())
+        .build());
+
+    bookmarkRepository.save(Bookmark.builder()
+        .account(account)
+        .jobPostings(null)
+        .createdAt(LocalDateTime.now())
+        .updatedAt(LocalDateTime.now())
         .build());
   }
 
@@ -115,7 +127,7 @@ public class AuthService {
    */
   @Transactional
   public void updateProfile(AccountUpdateRequest updateRequest, HttpServletRequest request, HttpServletResponse response) {
-    String username = tokenProvider.getUsernameFromRequest(request);
+    String username = tokenProvider.getUsernameFromRequest(request).orElse(null);
     Account account = accountRepository.findByUsername(username)
         .orElse(null);
 

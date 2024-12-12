@@ -11,6 +11,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Set;
+
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.FetchType;
 
 @Entity
 @Data
@@ -23,88 +27,55 @@ public class JobPosting {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * 구인 제목
-     */
     @Column
-    private String title;
+    private String title;   // 구인 제목
 
-    /**
-     * 회사 이름
-     */
     @Column
-    private String company;
+    private String company; // 회사 이름
 
-    /**
-     * 구인 링크
-     */
     @Column
-    private String link;
+    private String link;    // 구인 링크
 
-    /**
-     * 중복 체크를 위한 고유 식별자
-     */
     @Column(unique = true)
-    private String uniqueIdentifier;
+    private String uniqueIdentifier;  // 중복 체크용 고유 식별자
 
-    /**
-     * 지역
-     */
     @Column
-    private String location;
+    private String location;  // 지역
 
-    /**
-     * 경력
-     */
     @Column
-    private String experience;
+    private String experience;  // 경력
 
-    /**
-     * 학력
-     */
     @Column
-    private String education;
+    private String education;   // 학력
 
-    /**
-     * 고용 형태
-     */
     @Column
-    private String employmentType;
+    private String employmentType;  // 고용 형태
 
-    /**
-     * 마감일
-     */
     @Column
-    private String deadline;
+    private String deadline;  // 마감일
 
-    /**
-     * 직무 분야
-     */
     @Column
-    private String sector;
+    private String sector;  // 직무 분야
 
-    /**
-     * 평균연봉
-     */
     @Column
-    private String salary;
+    private String salary;  // 평균 연봉
 
-    /**
-     * 조회수
-     */
     @Column
-    private int viewCount;
+    private int viewCount;  // 조회수
+
+    @ManyToMany(mappedBy = "jobPostings", fetch = FetchType.EAGER)
+    private Set<Bookmark> bookmarks;
 
     public void update(JobRequest request) {
-      this.title = request.getTitle();
-      this.company = request.getCompany();
-      this.link = request.getLink();
-      this.location = request.getLocation();
-      this.experience = request.getExperience();
-      this.education = request.getEducation();
-      this.employmentType = request.getEmploymentType();
-      this.deadline = request.getDeadline();
-      this.sector = request.getSector();
-      this.salary = request.getSalary();
+        this.title = request.getTitle();
+        this.company = request.getCompany();
+        this.link = request.getLink();
+        this.location = request.getLocation();
+        this.experience = request.getExperience();
+        this.education = request.getEducation();
+        this.employmentType = request.getEmploymentType();
+        this.deadline = request.getDeadline();
+        this.sector = request.getSector();
+        this.salary = request.getSalary();
     }
 }

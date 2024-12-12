@@ -1,9 +1,10 @@
-package com.wsd.web.wsd_web_crawling.jobs.service;
+package com.wsd.web.wsd_web_crawling.jobs.components;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import com.wsd.web.wsd_web_crawling.jobs.dto.JobsSummary.JobsSummaryRequest;
+import com.wsd.web.wsd_web_crawling.jobs.service.JobCrawlingService;
 
 import lombok.RequiredArgsConstructor;
 
