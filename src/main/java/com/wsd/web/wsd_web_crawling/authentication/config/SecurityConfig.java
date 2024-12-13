@@ -31,7 +31,6 @@ public class SecurityConfig {
   private final JsonWebTokenAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final JsonWebTokenAccessDeniedHandler jwtAccessDeniedHandler;
   private final AccountDetailsService accountDetailsService;
-  private final CorsConfig corsConfig;
   private final JsonWebTokenAuthenticationFilter accountAuthenticationFilter;
 
   /**
@@ -44,7 +43,8 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-        .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
+        // .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
+        .cors(cors -> cors.disable())
         .csrf(csrf -> csrf.disable())
         .exceptionHandling(exception -> exception
             .authenticationEntryPoint(jwtAuthenticationEntryPoint)

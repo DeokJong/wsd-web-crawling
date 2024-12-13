@@ -1,12 +1,20 @@
-package com.wsd.web.wsd_web_crawling.jobs.dto;
+package com.wsd.web.wsd_web_crawling.jobs.dto.JobPostingDetail;
+
+import com.wsd.web.wsd_web_crawling.common.domain.base.BaseDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-public class JobRequest {
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = false)
+public class JobPostingDetailRequest extends BaseDto {
   @Schema(description = "제목", example = "Java 개발자")
   private String title;
   @Schema(description = "회사명", example = "원스토어")

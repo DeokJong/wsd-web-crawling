@@ -1,27 +1,32 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
-import com.wsd.web.wsd_web_crawling.jobs.dto.JobRequest;
+import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.Set;
 
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.FetchType;
 
 @Entity
-@Data
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class JobPosting {
+@Getter @Setter
+@EqualsAndHashCode(callSuper = false)
+public class JobPosting extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,17 +70,4 @@ public class JobPosting {
 
     @ManyToMany(mappedBy = "jobPostings", fetch = FetchType.EAGER)
     private Set<Bookmark> bookmarks;
-
-    public void update(JobRequest request) {
-        this.title = request.getTitle();
-        this.company = request.getCompany();
-        this.link = request.getLink();
-        this.location = request.getLocation();
-        this.experience = request.getExperience();
-        this.education = request.getEducation();
-        this.employmentType = request.getEmploymentType();
-        this.deadline = request.getDeadline();
-        this.sector = request.getSector();
-        this.salary = request.getSalary();
-    }
 }

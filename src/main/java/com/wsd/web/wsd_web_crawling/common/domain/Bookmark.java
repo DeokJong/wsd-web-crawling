@@ -1,7 +1,6 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
-import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,18 +10,24 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
 
 @Entity
-@Data
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Bookmark {
+@Getter @Setter
+@EqualsAndHashCode(callSuper = false)
+public class Bookmark extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +36,7 @@ public class Bookmark {
     @OneToOne
     @JoinColumn(name = "account_id", referencedColumnName = "id")
     @JsonIgnore
+    @EqualsAndHashCode.Exclude
     private Account account;
 
     @ManyToMany
@@ -39,8 +45,5 @@ public class Bookmark {
         joinColumns = @JoinColumn(name = "bookmark_id"),
         inverseJoinColumns = @JoinColumn(name = "job_posting_id")
     )
-    private Set<JobPosting> jobPostings;
-
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private List<JobPosting> jobPostings;
 }

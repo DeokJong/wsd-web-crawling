@@ -1,15 +1,23 @@
-package com.wsd.web.wsd_web_crawling.jobs.dto.JobsSummary;
+package com.wsd.web.wsd_web_crawling.jobs.dto.JobPostingsSummary;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Builder.Default;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import com.wsd.web.wsd_web_crawling.common.domain.base.BaseDto;
+
 @Data
 @Builder
-public class JobsSummaryRequest {
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = false)
+public class JobPostingsSummaryRequest extends BaseDto {
   @Default
   @Schema(description = "페이지 번호", example = "1")
   private int page = 1;

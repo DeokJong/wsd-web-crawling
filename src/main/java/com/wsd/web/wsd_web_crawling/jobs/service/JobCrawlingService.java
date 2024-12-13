@@ -17,7 +17,7 @@ import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
 import com.wsd.web.wsd_web_crawling.common.repository.JobPostingRepository;
 import com.wsd.web.wsd_web_crawling.jobs.components.HtmlParser;
 import com.wsd.web.wsd_web_crawling.jobs.components.LocationResolver;
-import com.wsd.web.wsd_web_crawling.jobs.dto.JobsSummary.JobsSummaryRequest;
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobPostingsSummary.JobPostingsSummaryRequest;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class JobCrawlingService {
 
   @Async
   @Transactional
-  public CompletableFuture<Void> crawlSaramin(JobsSummaryRequest jobsRequest, int totalCount) {
+  public CompletableFuture<Void> crawlSaramin(JobPostingsSummaryRequest jobsRequest, int totalCount) {
 
     List<CompletableFuture<Void>> futures = new ArrayList<>();
     int totalPages = totalCount / 6;
@@ -60,7 +60,7 @@ public class JobCrawlingService {
 
   @Async
   @Transactional
-  public CompletableFuture<Void> crawlSaramin(JobsSummaryRequest jobsRequest, int initPageParams, int endPageParams)
+  public CompletableFuture<Void> crawlSaramin(JobPostingsSummaryRequest jobsRequest, int initPageParams, int endPageParams)
       throws IOException, InterruptedException {
 
     log.info("crawlSaramin start: {} - {}", initPageParams, endPageParams);

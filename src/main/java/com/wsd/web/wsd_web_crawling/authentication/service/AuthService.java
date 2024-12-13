@@ -3,8 +3,7 @@ package com.wsd.web.wsd_web_crawling.authentication.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,6 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.wsd.web.wsd_web_crawling.authentication.components.JsonWebTokenProvider;
 import com.wsd.web.wsd_web_crawling.authentication.dto.AccountCreateRequest;
@@ -81,6 +81,11 @@ public class AuthService {
    * @param request 사용자 생성 요청 정보
    */
   public void register(AccountCreateRequest request) {
+
+    if (accountRepository.existsByUsername(request.getUsername())) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 존재하는 사용자입니다.");
+    }
+
     Account account = accountRepository.save(Account.builder()
         .username(request.getUsername())
         .password(passwordEncoder.encode(request.getPassword()))
@@ -90,8 +95,6 @@ public class AuthService {
     bookmarkRepository.save(Bookmark.builder()
         .account(account)
         .jobPostings(null)
-        .createdAt(LocalDateTime.now())
-        .updatedAt(LocalDateTime.now())
         .build());
   }
 

@@ -1,6 +1,7 @@
 package com.wsd.web.wsd_web_crawling.bookmarks.service;
 
-import java.util.Set;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -8,12 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.wsd.web.wsd_web_crawling.authentication.components.JsonWebTokenProvider;
+import com.wsd.web.wsd_web_crawling.bookmarks.dto.BookmarksResponse;
 import com.wsd.web.wsd_web_crawling.common.domain.Account;
 import com.wsd.web.wsd_web_crawling.common.domain.Bookmark;
 import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
 import com.wsd.web.wsd_web_crawling.common.repository.AccountRepository;
 import com.wsd.web.wsd_web_crawling.common.repository.BookmarkRepository;
 import com.wsd.web.wsd_web_crawling.common.repository.JobPostingRepository;
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobPostingDetail.JobPostingDetailResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -28,33 +31,58 @@ public class BookmarksService {
   private final JobPostingRepository jobPostingRepository;
   private final JsonWebTokenProvider tokenProvider;
 
-  @Transactional
-  public Bookmark readBookmark(HttpServletRequest request) {
-    return getBookmarkByRequest(request);
-  }
+@Transactional
+public BookmarksResponse readBookmark(HttpServletRequest request) {
+    Bookmark bookmark = getBookmarkByRequest(request);
+
+    // 트랜잭션 범위 내에서 jobPostings 접근 및 DTO 변환
+    List<JobPostingDetailResponse> jobPostingDetailResponses = bookmark.getJobPostings().stream()
+        .map(jobPosting -> {
+          JobPostingDetailResponse response = new JobPostingDetailResponse();
+          response.updateFrom(jobPosting);
+          return response;
+        })
+        .collect(Collectors.toList());
+
+    // BookmarksResponse DTO 생성 및 데이터 설정
+    BookmarksResponse response = new BookmarksResponse();
+    response.updateFrom(bookmark);
+    response.setJobPostingDetailResponses(jobPostingDetailResponses);
+
+    return response;
+}
+
 
   @Transactional
-  public Bookmark addPostingIntoBookmark(Long jobPostingId, HttpServletRequest request) {
+  public BookmarksResponse addPostingIntoBookmark(Long jobPostingId, HttpServletRequest request) {
     Bookmark bookmark = getBookmarkByRequest(request);
     JobPosting jobPosting = jobPostingRepository.findById(jobPostingId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "잡 포스팅을 찾을 수 없습니다."));
 
-    Set<JobPosting> bookmarkJobPosting = bookmark.getJobPostings();
+    List<JobPosting> bookmarkJobPosting = bookmark.getJobPostings();
     bookmarkJobPosting.add(jobPosting);
     bookmark.setJobPostings(bookmarkJobPosting);
-    return bookmarkRepository.save(bookmark);
+    bookmarkRepository.save(bookmark);
+
+    BookmarksResponse response = new BookmarksResponse();
+    response.updateFrom(bookmark);
+    return response;
   }
 
   @Transactional
-  public Bookmark removePostingFromBookmark(Long jobPostingId, HttpServletRequest request) {
+  public BookmarksResponse removePostingFromBookmark(Long jobPostingId, HttpServletRequest request) {
     Bookmark bookmark = getBookmarkByRequest(request);
     JobPosting jobPosting = jobPostingRepository.findById(jobPostingId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "잡 포스팅을 찾을 수 없습니다."));
 
-    Set<JobPosting> bookmarkJobPosting = bookmark.getJobPostings();
+    List<JobPosting> bookmarkJobPosting = bookmark.getJobPostings();
     bookmarkJobPosting.remove(jobPosting);
     bookmark.setJobPostings(bookmarkJobPosting);
-    return bookmarkRepository.save(bookmark);
+    bookmarkRepository.save(bookmark);
+
+    BookmarksResponse response = new BookmarksResponse();
+    response.updateFrom(bookmark);
+    return response;
   }
 
   @Transactional
@@ -70,8 +98,8 @@ public class BookmarksService {
     Bookmark bookmark = bookmarkRepository.findByAccountId(account.getId()).orElseThrow(
       () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "북마크를 찾을 수 없습니다.")
     );
-    log.info("account: {}", account);
-    log.info("bookmark: {}", bookmark);
+    log.debug("account: {}", account);
+    log.debug("bookmark: {}", bookmark);
     return bookmark;
   }
 }

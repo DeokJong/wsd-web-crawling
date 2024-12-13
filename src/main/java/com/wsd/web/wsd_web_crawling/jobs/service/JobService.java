@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 
 import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
 import com.wsd.web.wsd_web_crawling.common.repository.JobPostingRepository;
-import com.wsd.web.wsd_web_crawling.jobs.dto.JobsSummary.JobsSummaryRequest;
-import com.wsd.web.wsd_web_crawling.jobs.dto.JobRequest;
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobPostingDetail.JobPostingDetailRequest;
+import com.wsd.web.wsd_web_crawling.jobs.dto.JobPostingsSummary.JobPostingsSummaryRequest;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +24,11 @@ public class JobService {
   private final JobPostingRepository jobPostingRepository;
   // private final JobCrawlingService jobCrawlingService;
 
-  public Page<JobPosting> getJobPostings(JobsSummaryRequest jobsRequest) {
-    Pageable pageable = jobsRequest.toPageable();
+  public Page<JobPosting> getJobPostings(JobPostingsSummaryRequest requestDto) {
+    Pageable pageable = requestDto.toPageable();
     Page<JobPosting> jobPostings = jobPostingRepository.findByKeywordAndLocation(
-        jobsRequest.getKeyword(),
-        jobsRequest.getLocation(),
+        requestDto.getKeyword(),
+        requestDto.getLocation(),
         pageable);
     if (jobPostings.getTotalElements() < 100) {
       log.info("crawling start but not implemented");
@@ -50,8 +50,8 @@ public class JobService {
     }
   }
 
-  public JobPosting createJobPosting(JobRequest request) {
-    JobPosting jobPosting = getJobPostingFromRequest(request);
+  public JobPosting createJobPosting(JobPostingDetailRequest requestDto) {
+    JobPosting jobPosting = getJobPostingFromRequest(requestDto);
 
     if (jobPostingRepository.existsByUniqueIdentifier(jobPosting.getUniqueIdentifier())) {
       throw new IllegalArgumentException("이미 존재하는 공고입니다.");
@@ -69,28 +69,28 @@ public class JobService {
     return false;
   }
 
-  public JobPosting updateJobPosting(Long id, JobRequest request) {
+  public JobPosting updateJobPosting(Long id, JobPostingDetailRequest requestDto) {
     JobPosting jobPosting = jobPostingRepository.findById(id).orElse(null);
     if (jobPosting != null) {
-      jobPosting.update(request);
+      jobPosting.updateFrom(requestDto);
       return jobPostingRepository.save(jobPosting);
     }
     return null;
   }
 
-  private JobPosting getJobPostingFromRequest(JobRequest request) {
+  private JobPosting getJobPostingFromRequest(JobPostingDetailRequest requestDto) {
     return JobPosting.builder()
-        .title(request.getTitle())
-        .company(request.getCompany())
-        .link(request.getLink())
-        .uniqueIdentifier(request.getTitle() + request.getCompany())
-        .location(request.getLocation())
-        .experience(request.getExperience())
-        .education(request.getEducation())
-        .employmentType(request.getEmploymentType())
-        .deadline(request.getDeadline())
-        .sector(request.getSector())
-        .salary(request.getSalary())
+        .title(requestDto.getTitle())
+        .company(requestDto.getCompany())
+        .link(requestDto.getLink())
+        .uniqueIdentifier(requestDto.getTitle() + requestDto.getCompany())
+        .location(requestDto.getLocation())
+        .experience(requestDto.getExperience())
+        .education(requestDto.getEducation())
+        .employmentType(requestDto.getEmploymentType())
+        .deadline(requestDto.getDeadline())
+        .sector(requestDto.getSector())
+        .salary(requestDto.getSalary())
         .build();
   }
 }

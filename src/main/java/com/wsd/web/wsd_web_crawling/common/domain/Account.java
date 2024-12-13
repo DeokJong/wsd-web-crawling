@@ -1,5 +1,6 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
+import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
 import com.wsd.web.wsd_web_crawling.common.model.Role;
 
 import jakarta.persistence.Column;
@@ -10,19 +11,22 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.AccessLevel;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.CascadeType;
 
 @Entity
-@Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Account {
+@Getter @Setter
+@EqualsAndHashCode(callSuper = false)
+public class Account extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
