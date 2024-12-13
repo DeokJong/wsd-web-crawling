@@ -1,5 +1,9 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
 import com.wsd.web.wsd_web_crawling.common.model.Role;
 
@@ -10,6 +14,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -48,4 +53,9 @@ public class Account extends BaseTimeEntity {
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private Bookmark bookmark;
+
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @JsonIgnore
+    private Set<Application> applications = new HashSet<>();
 }

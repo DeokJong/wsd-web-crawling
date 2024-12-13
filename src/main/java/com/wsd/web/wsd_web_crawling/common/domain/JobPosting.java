@@ -1,7 +1,9 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,9 +17,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.FetchType;
 
 @Entity
@@ -70,4 +74,9 @@ public class JobPosting extends BaseTimeEntity {
 
     @ManyToMany(mappedBy = "jobPostings", fetch = FetchType.EAGER)
     private Set<Bookmark> bookmarks;
+
+    @OneToMany(mappedBy = "jobPosting", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    @JsonIgnore
+    private Set<Application> applications = new HashSet<>();
 }

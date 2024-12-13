@@ -92,13 +92,13 @@ public class JsonWebTokenAuthenticationFilter extends OncePerRequestFilter {
     try {
       // 요청에서 토큰 추출
       String token = resolveToken(request);
-      log.info("Extracted JWT token: {}", token);
+      log.debug("Extracted JWT token: {}", token);
       // 토큰 유효성 검증 및 인증 객체 설정
       if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
         Authentication authentication = tokenProvider.getAuthentication(token);
         // SecurityContextHolder에 인증 객체 설정
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        log.info("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}", authentication.getName(),
+        log.debug("Security Context에 '{}' 인증 정보를 저장했습니다, uri: {}", authentication.getName(),
             request.getRequestURI());
       }
     } catch (AuthenticationException e) {

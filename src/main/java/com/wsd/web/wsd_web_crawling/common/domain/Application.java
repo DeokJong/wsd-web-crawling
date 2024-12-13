@@ -1,15 +1,14 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,34 +17,30 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
-
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Getter @Setter
-@EqualsAndHashCode(callSuper = false)
-public class Bookmark extends BaseTimeEntity {
-
+public class Application extends BaseTimeEntity {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @OneToOne
+    
+    @ManyToOne
     @JoinColumn(name = "account_id", referencedColumnName = "id")
     @JsonIgnore
     @EqualsAndHashCode.Exclude
     private Account account;
-
-    @ManyToMany
-    @JoinTable(
-        name = "bookmark_job_postings",
-        joinColumns = @JoinColumn(name = "bookmark_id"),
-        inverseJoinColumns = @JoinColumn(name = "job_posting_id")
-    )
+    
+    @ManyToOne
+    @JoinColumn(name = "job_posting_id", referencedColumnName = "id")
     @JsonIgnore
     @EqualsAndHashCode.Exclude
-    private List<JobPosting> jobPostings;
+    private JobPosting jobPosting;
+    
+    private String resume; // 이력서 첨부 파일 경로 (선택)
+    
+    private String status; // 지원 상태 (예: 지원 완료, 취소됨 등)
 }

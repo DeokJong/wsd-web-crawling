@@ -7,8 +7,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.wsd.web.wsd_web_crawling.applications.service.ApplicationsService;
 import com.wsd.web.wsd_web_crawling.common.dto.Response;
 
 import lombok.RequiredArgsConstructor;
@@ -35,21 +37,26 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/applications")
 @RequiredArgsConstructor
 public class ApplicationsController {
+
+  private final ApplicationsService applicationsService;
+
   @PostMapping
-  public ResponseEntity<Response<?>> addApplication() {
-    Response<?> body = Response.createResponseWithoutData(HttpStatus.OK.value(), "지원 추가 성공");
+  public ResponseEntity<Response<?>> addApplication(@RequestParam Long jobPostingId,
+      @RequestParam(required = false) String resume) {
+    Response<?> body = applicationsService.addApplication(jobPostingId, resume);
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 
   @GetMapping
-  public ResponseEntity<Response<?>> getApplications() {
-    Response<?> body = Response.createResponseWithoutData(HttpStatus.OK.value(), "지원 내역 조회 성공");
+  public ResponseEntity<Response<?>> getApplications(@RequestParam(required = false) String status,
+      @RequestParam(required = false) String sort) {
+    Response<?> body = applicationsService.getApplications(status, sort);
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Response<?>> deleteApplication(@PathVariable Long id) {
-    Response<?> body = Response.createResponseWithoutData(HttpStatus.OK.value(), "지원 취소 성공");
+    Response<?> body = applicationsService.deleteApplication(id);
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 }
