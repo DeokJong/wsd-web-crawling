@@ -2,6 +2,7 @@ package com.wsd.web.wsd_web_crawling.common.repository;
 
 import java.util.Optional;
 
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,7 @@ import com.wsd.web.wsd_web_crawling.common.domain.Account;
  * 이 인터페이스는 Spring Data JPA의 JpaRepository를 확장합니다.
  */
 @Repository
+@DynamicUpdate
 public interface AccountRepository extends JpaRepository<Account, Long> {
     /**
      * 주어진 사용자 이름으로 Account를 찾습니다.

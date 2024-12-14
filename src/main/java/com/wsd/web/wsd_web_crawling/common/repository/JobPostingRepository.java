@@ -1,5 +1,6 @@
 package com.wsd.web.wsd_web_crawling.common.repository;
 
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,7 @@ import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
  * 이 인터페이스는 JpaRepository를 확장하여 기본적인 데이터베이스 작업을 제공합니다.
  */
 @Repository
+@DynamicUpdate
 public interface JobPostingRepository extends JpaRepository<JobPosting, Long> {
 
   /**

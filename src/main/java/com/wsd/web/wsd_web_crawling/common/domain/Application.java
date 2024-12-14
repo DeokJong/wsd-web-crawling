@@ -1,8 +1,12 @@
 package com.wsd.web.wsd_web_crawling.common.domain;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wsd.web.wsd_web_crawling.common.domain.base.BaseTimeEntity;
+import com.wsd.web.wsd_web_crawling.common.model.ApplicationStatus;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,8 +43,10 @@ public class Application extends BaseTimeEntity {
     @JsonIgnore
     @EqualsAndHashCode.Exclude
     private JobPosting jobPosting;
-    
-    private String resume; // 이력서 첨부 파일 경로 (선택)
-    
-    private String status; // 지원 상태 (예: 지원 완료, 취소됨 등)
+
+    @Column
+    private LocalDateTime appliedAt;
+
+    @Column
+    private ApplicationStatus status; // 지원 상태 (예: 지원 완료, 취소됨 등)
 }
