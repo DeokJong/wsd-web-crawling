@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,21 +30,21 @@ public class ApplicationsController {
 
   @GetMapping("/")
   public ResponseEntity<Response<?>> getApplications(
-    @RequestBody ApplicationGetRequest request,
+    @ModelAttribute ApplicationGetRequest requestDto,
     HttpServletRequest httpServletRequest
   ) {
-    log.info("request: {}", request);
-    Response<?> body = applicationsService.getApplications(request, httpServletRequest);
+    log.info("request: {}", requestDto);
+    Response<?> body = applicationsService.getApplications(requestDto, httpServletRequest);
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 
   @PostMapping("/")
   public ResponseEntity<Response<?>> addApplication(
-    @RequestBody ApplicationPostRequest request,
+    @RequestBody ApplicationPostRequest requestDto,
     HttpServletRequest httpServletRequest
   ){
-    log.info("request: {}", request.getPostingId());
-    Response<?> body = applicationsService.addApplication(request, httpServletRequest);
+    log.info("request: {}", requestDto.getPostingId());
+    Response<?> body = applicationsService.addApplication(requestDto, httpServletRequest);
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 

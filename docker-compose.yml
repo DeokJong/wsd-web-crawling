@@ -21,7 +21,9 @@ services:
       - redis_data:/data
 
   springboot-container:
-    image: springboot-image:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:

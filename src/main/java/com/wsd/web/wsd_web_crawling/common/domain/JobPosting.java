@@ -70,7 +70,8 @@ public class JobPosting extends BaseTimeEntity {
     private String salary;  // 평균 연봉
 
     @Column
-    private int viewCount;  // 조회수
+    @Builder.Default
+    private Integer viewCount = 0;  // 조회수
 
     @ManyToMany(mappedBy = "jobPostings", fetch = FetchType.EAGER)
     private Set<Bookmark> bookmarks;
@@ -80,3 +81,4 @@ public class JobPosting extends BaseTimeEntity {
     @JsonIgnore
     private Set<Application> applications = new HashSet<>();
 }
+  

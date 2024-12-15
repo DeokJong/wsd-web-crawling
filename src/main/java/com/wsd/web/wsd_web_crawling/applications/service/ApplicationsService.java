@@ -1,11 +1,9 @@
 package com.wsd.web.wsd_web_crawling.applications.service;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +15,6 @@ import com.wsd.web.wsd_web_crawling.authentication.components.JsonWebTokenProvid
 import com.wsd.web.wsd_web_crawling.common.domain.Account;
 import com.wsd.web.wsd_web_crawling.common.dto.Response;
 import com.wsd.web.wsd_web_crawling.common.model.ApplicationStatus;
-import com.wsd.web.wsd_web_crawling.common.model.DateOrder;
 import com.wsd.web.wsd_web_crawling.common.domain.Application;
 import com.wsd.web.wsd_web_crawling.common.repository.AccountRepository;
 import com.wsd.web.wsd_web_crawling.common.repository.ApplicationRepository;
@@ -78,33 +75,33 @@ public class ApplicationsService {
     
     @Transactional(readOnly = true)
     public Response<?> getApplications(ApplicationGetRequest request, HttpServletRequest httpServletRequest) {
+        log.info("request.status : {}", request.getStatus());
+        log.info("request.dateOrder : {}", request.getDateOrder());
+        log.info("request.page : {}", request.getPage());
+        log.info("request.size : {}", request.getSize());
         Optional<String> username = jsonWebTokenProvider.getUsernameFromRequest(httpServletRequest);
         Account account = accountRepository.findByUsername(username.get()).orElse(null);
-        List<Application> applications = applicationRepository.findByAccount(account);
+        Page<Application> pageApplications;
+        
+        if (request.getStatus() == ApplicationStatus.ALL) {
+          pageApplications = applicationRepository.findByAccount(account, request.toPageable());
+        } else {
+          pageApplications = applicationRepository.findByAccountAndStatus(account, request.getStatus(), request.toPageable());
+        }
 
         if (account == null) {
           return Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), "인증되지 않은 사용자입니다.");
         }
 
-        if (request.getStatus() != null) {
-          applications = applications.stream()
-              .filter(application -> application.getStatus().equals(request.getStatus()))
-              .collect(Collectors.toList());
-        }
-
-        applications.sort(Comparator.comparing(Application::getAppliedAt, request.getDateOrder().equals(DateOrder.ASC) ? Comparator.naturalOrder() : Comparator.reverseOrder()));
-
-        List<ApplicationDTO> response = applications.stream()
-            .map(application -> ApplicationDTO.builder()
-                .applicationId(application.getId())
-                .appliedAt(application.getAppliedAt())
-                .status(application.getStatus().name())
-                .jobPostingId(application.getJobPosting().getId())
-                .jobPostingTitle(application.getJobPosting().getTitle())
-                .jobPostingCompany(application.getJobPosting().getCompany())
-                .jobPostingLink(application.getJobPosting().getLink())
-                .build())
-            .collect(Collectors.toList());
+        Page<ApplicationDTO> response = pageApplications.map(application -> ApplicationDTO.builder()
+            .applicationId(application.getId())
+            .appliedAt(application.getAppliedAt())
+            .status(application.getStatus().name())
+            .jobPostingId(application.getJobPosting().getId())
+            .jobPostingTitle(application.getJobPosting().getTitle())
+            .jobPostingCompany(application.getJobPosting().getCompany())
+            .jobPostingLink(application.getJobPosting().getLink())
+            .build());
 
         return Response.createResponse(HttpStatus.OK.value(), "지원 내역 조회 성공", response);
     }

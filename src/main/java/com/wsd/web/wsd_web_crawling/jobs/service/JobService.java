@@ -30,10 +30,6 @@ public class JobService {
         requestDto.getKeyword(),
         requestDto.getLocation(),
         pageable);
-    if (jobPostings.getTotalElements() < 100) {
-      log.info("crawling start but not implemented");
-      // jobCrawlingService.crawlSaramin(jobsRequest, 10);
-    }
 
     return jobPostings;
   }

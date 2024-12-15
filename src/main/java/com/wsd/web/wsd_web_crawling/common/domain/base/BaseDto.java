@@ -7,9 +7,17 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = false)
 public abstract class BaseDto {
 
   private static final Map<Class<?>, Map<String, Field>> fieldCache = new ConcurrentHashMap<>();

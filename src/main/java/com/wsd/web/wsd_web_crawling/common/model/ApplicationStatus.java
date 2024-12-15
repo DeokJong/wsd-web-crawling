@@ -8,5 +8,5 @@ public enum ApplicationStatus {
   HIRED,
   CANCELLED,
   UNKNOWN,
-  
+  ALL
 }
