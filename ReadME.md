@@ -76,6 +76,13 @@ run.sh 파일을 실행하여 Docker Container 에다가 애플리케이션을 �
 ./run.sh
 ```
 
+해당 방법을 사용하지 못한다면 Docker Compose 를 사용하여 실행합니다.
+
+```bash
+docker build --network=host -t springboot-image .
+docker compose  -f "docker-compose.yml" up -d --build postgreSQL redis springboot-container
+```
+
 만일 초기 데이터를 구성하고 싶다면
 
 ```bash
