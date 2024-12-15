@@ -9,12 +9,19 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * 북마크 응답 DTO 클래스.
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = false)
 public class BookmarksResponse extends BaseDto {
-  private JobPostingDetailResponse jobPostingDetailResponse;
+  
+    /**
+     * 잡 포스팅 상세 응답 정보.
+     */
+    private JobPostingDetailResponse jobPostingDetailResponse;
 
 }

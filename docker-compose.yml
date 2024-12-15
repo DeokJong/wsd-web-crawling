@@ -5,7 +5,7 @@ services:
     image: postgres
     restart: always
     ports:
-      - 5432:5432
+      - 8080:5432
     environment:
       POSTGRES_DB: dev
       POSTGRES_PASSWORD: 123456
@@ -16,14 +16,13 @@ services:
     image: redis:6.2
     restart: always
     ports:
-      - 6379:6379
+      - 3000:6379
     volumes:
       - redis_data:/data
+    command: ["redis-server", "--requirepass", "123456"]
 
   springboot-container:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: springboot-image
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
@@ -31,7 +30,7 @@ services:
       - redis
     restart: always
     ports:
-      - 8080:8080
+      - 80:8080
 
 volumes:
   postgres_data:

@@ -27,6 +27,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * JSON Web Token을 생성하고 검증하는 역할을 담당하는 컴포넌트입니다.
+ */
 @Slf4j
 @Component
 public class JsonWebTokenProvider {
@@ -46,6 +49,18 @@ public class JsonWebTokenProvider {
   private Key refreshKey;
   private JwtParser refreshParser;
 
+  /**
+   * JsonWebTokenProvider의 생성자입니다.
+   *
+   * @param secret JWT Access 토큰에 사용되는 비밀키
+   * @param refreshSecret JWT Refresh 토큰에 사용되는 비밀키
+   * @param tokenValidityInSeconds Access 토큰의 유효 기간 (초 단위)
+   * @param refreshTokenValidityInSeconds Refresh 토큰의 유효 기간 (초 단위)
+   * @param AUTHORIZATION_HEADER_ACCESS Access 토큰의 헤더 이름
+   * @param AUTHORIZATION_HEADER_REFRESH Refresh 토큰의 헤더 이름
+   * @param userDetailsService 사용자 정보를 로드하는 서비스
+   * @param refreshTokenStore Refresh 토큰을 저장하고 검증하는 저장소
+   */
   public JsonWebTokenProvider(
       @Value("${jwt.access-secret}") String secret,
       @Value("${jwt.refresh-secret}") String refreshSecret,
@@ -74,6 +89,9 @@ public class JsonWebTokenProvider {
     this.refreshTokenStore = refreshTokenStore;
   }
 
+  /**
+   * 초기화 메소드로, 비밀키를 디코딩하여 키 객체와 파서를 초기화합니다.
+   */
   @PostConstruct
   public void init() {
     byte[] keyBytes = Decoders.BASE64.decode(accessSecret);
@@ -86,10 +104,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * Authentication 객체의 권한 정보를 이용하여 JWT 토큰을 생성하는 메소드
-   * 
+   * Authentication 객체의 권한 정보를 이용하여 JWT Access 토큰을 생성하는 메소드입니다.
+   *
    * @param authentication 인증 정보
-   * @return 생성된 JWT 토큰
+   * @return 생성된 JWT Access 토큰
    */
   public String createToken(Authentication authentication) {
     String authorities = authentication.getAuthorities().stream()
@@ -109,10 +127,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * Refresh Token 생성 메소드
-   * 
+   * Authentication 객체를 이용하여 JWT Refresh 토큰을 생성하는 메소드입니다.
+   *
    * @param authentication 인증 정보
-   * @return 생성�� Refresh Token
+   * @return 생성된 JWT Refresh 토큰
    */
   public String createRefreshToken(Authentication authentication) {
     Date now = new Date();
@@ -127,10 +145,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * JWT 토큰으로부터 인증 정보를 조회하는 메소드
-   * 
-   * @param accessToken JWT 토큰
-   * @return 인증 정보
+   * JWT Access 토큰으로부터 인증 정보를 조회하는 메소드입니다.
+   *
+   * @param accessToken JWT Access 토큰
+   * @return 인증 정보(Authentication 객체) 또는 null
    */
   public Authentication getAuthentication(String accessToken) {
     if (!validateToken(accessToken)) {
@@ -148,10 +166,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * 토큰의 유효성을 검증하는 메소드
-   * 
-   * @param accessToken 검증할 JWT 토큰
-   * @return 유효성 검사 결과
+   * JWT 토큰의 유효성을 검증하는 메소드입니다.
+   *
+   * @param accessToken 검증할 JWT Access 토큰
+   * @return 토큰이 유효하면 true, 그렇지 않으면 false
    */
   public boolean validateToken(String accessToken) {
 
@@ -165,10 +183,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * Refresh Token에서 새로운 Access Token 생성
-   * 
-   * @param refreshToken Refresh Token
-   * @return 생성된 Access Token
+   * Refresh 토큰으로부터 새로운 Access 토큰을 생성하는 메소드입니다.
+   *
+   * @param refreshToken Refresh 토큰
+   * @return 생성된 새로운 Access 토큰 또는 null
    */
   public String createAccessTokenFromRefreshToken(String refreshToken) {
     Claims claims = refreshParser.parseClaimsJws(refreshToken).getBody();
@@ -187,10 +205,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * 토큰의 남은 유효 시간 (밀리초 단위) 반���
-   * 
-   * @param accessToken JWT 토큰
-   * @return 남은 유효 시간
+   * JWT 토큰의 남은 유효 시간을 밀리초 단위로 반환하는 메소드입니다.
+   *
+   * @param accessToken JWT Access 토큰
+   * @return 남은 유효 시간 (밀리초)
    */
   public long getExpiration(String accessToken) {
     Claims claims = accessParser.parseClaimsJws(accessToken).getBody();
@@ -199,10 +217,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * Refresh Token의 남은 유효 시간 (밀리초 단위) 반환
-   * 
-   * @param refreshToken Refresh Token
-   * @return 남은 유효 시간
+   * Refresh 토큰의 남은 유효 시간을 밀리초 단위로 반환하는 메소드입니다.
+   *
+   * @param refreshToken Refresh 토큰
+   * @return 남은 유효 시간 (밀리초)
    */
   public long getRefreshTokenExpiration(String refreshToken) {
     Claims claims = refreshParser.parseClaimsJws(refreshToken).getBody();
@@ -211,10 +229,10 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * 토큰에서 사용자 이름 추출
-   * 
+   * HTTP 요청에서 사용자 이름을 추출하는 메소드입니다.
+   *
    * @param request HTTP 요청
-   * @return 사용자 이름
+   * @return 사용자 이름을 포함한 Optional 객체
    */
   public Optional<String> getUsernameFromRequest(HttpServletRequest request) {
     return Optional.ofNullable(request.getCookies())
@@ -227,12 +245,12 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * 쿠키 생성
-   * 
+   * 지정된 이름과 값을 가지는 쿠키를 생성하는 메소드입니다.
+   *
    * @param name 쿠키 이름
    * @param value 쿠키 값
    * @param maxAge 쿠키 최대 수명 (밀리초 단위)
-   * @return 생성된 쿠키
+   * @return 생성된 쿠키 객체
    */
   public Cookie createCookie(String name, String value, long maxAge) {
     Cookie cookie = new Cookie(name, value);
@@ -243,8 +261,8 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * 응답에서 쿠키 삭제
-   * 
+   * HTTP 응답에서 지정된 이름의 쿠키를 삭제하는 메소드입니다.
+   *
    * @param response HTTP 응답
    * @param name 삭제할 쿠키 이름
    */
@@ -256,6 +274,12 @@ public class JsonWebTokenProvider {
     response.addCookie(deleteCookie);
   }
 
+  /**
+   * HTTP 요청에서 Access 토큰을 추출하는 메소드입니다.
+   *
+   * @param request HTTP 요청
+   * @return Access 토큰 문자열 또는 null
+   */
   public String getAccessTokenFromRequest(HttpServletRequest request) {
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
@@ -268,6 +292,12 @@ public class JsonWebTokenProvider {
     return null;
   }
 
+  /**
+   * HTTP 요청에서 Refresh 토큰을 추출하는 메소드입니다.
+   *
+   * @param request HTTP 요청
+   * @return Refresh 토큰 문자열 또는 null
+   */
   public String getRefreshTokenFromRequest(HttpServletRequest request) {
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {

@@ -13,20 +13,29 @@ import java.io.InputStream;
 import java.util.HashMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+/**
+ * LocationResolver 클래스는 위치 코드를 위치 이름으로 변환하는 역할을 합니다.
+ */
 @Component
 @RequiredArgsConstructor
 public class LocationResolver {
 
-  @Value("classpath:constant/LocationCode.json") // JSON 파일 경로 업데이트
+  @Value("classpath:constant/LocationCode.json")
   private Resource resource;
 
   private Map<String, String> jsonMap;
 
+  /**
+   * 초기화 메서드로 JSON 데이터를 로드합니다.
+   */
   @PostConstruct
   public void init() {
     loadJson();
   }
 
+  /**
+   * JSON 파일을 읽어 Map에 로드하는 메서드입니다.
+   */
   private void loadJson() {
     try (InputStream inputStream = resource.getInputStream()) {
       ObjectMapper objectMapper = new ObjectMapper();
@@ -45,6 +54,6 @@ public class LocationResolver {
     if (loc_cd == null) {
       return "";
     }
-    return jsonMap.get(loc_cd); // 입력값에 대한 value 리턴
+    return jsonMap.get(loc_cd);
   }
 }

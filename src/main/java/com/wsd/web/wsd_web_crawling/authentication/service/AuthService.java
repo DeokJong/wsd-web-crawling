@@ -42,10 +42,11 @@ public class AuthService {
   private final RefreshTokenStore refreshTokenStore;
 
   /**
-   * 사용자 로그인 처리.
+   * 사용자 로그인 처리를 담당하는 메서드입니다.
    *
    * @param loginRequest 로그인 요청 정보
    * @param response     HTTP 응답 객체
+   * @return 로그인 성공 여부에 대한 응답 객체
    * @throws AuthenticationException 인증 실패 시 발생
    */
   public Response<?> login(LoginRequest loginRequest, HttpServletResponse response) {
@@ -72,9 +73,11 @@ public class AuthService {
   }
 
   /**
-   * 사용자 로그아웃 처리.
+   * 사용자 로그아웃 처리를 담당하는 메서드입니다.
    *
+   * @param request  HTTP 요청 객체
    * @param response HTTP 응답 객체
+   * @return 로그아웃 성공 여부에 대한 응답 객체
    */
   public Response<?> logout(HttpServletRequest request, HttpServletResponse response) {
 
@@ -88,9 +91,10 @@ public class AuthService {
   }
 
   /**
-   * 새로운 사용자 등록.
+   * 새로운 사용자를 등록하는 메서드입니다.
    *
    * @param request 사용자 생성 요청 정보
+   * @return 회원가입 성공 여부에 대한 응답 객체
    */
   public Response<?> register(AccountCreateRequest request) {
 
@@ -113,10 +117,11 @@ public class AuthService {
   }
 
   /**
-   * 리프레시 토큰을 사용하여 액세스 토큰 갱신.
+   * 리프레시 토큰을 사용하여 액세스 토큰을 갱신하는 메서드입니다.
    *
    * @param request  HTTP 요청 객체
    * @param response HTTP 응답 객체
+   * @return 액세스 토큰 갱신 여부에 대한 응답 객체
    */
   public Response<?> getAccessTokenRefresh(HttpServletRequest request, HttpServletResponse response) {
     String refreshToken = tokenProvider.getRefreshTokenFromRequest(request);
@@ -131,11 +136,12 @@ public class AuthService {
   }
 
   /**
-   * 사용자 프로필 업데이트.
+   * 사용자 프로필을 업데이트하는 메서드입니다.
    *
    * @param updateRequest 업데이트 요청 정보
    * @param request       HTTP 요청 객체
    * @param response      HTTP 응답 객체
+   * @return 프로필 업데이트 성공 여부에 대한 응답 객체
    * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우 발생
    */
   @Transactional
@@ -161,6 +167,11 @@ public class AuthService {
     return Response.createResponseWithoutData(HttpStatus.OK.value(), "프로필 업데이트 성공");
   }
 
+  /**
+   * 현재 인증된 사용자의 계정을 가져오는 메서드입니다.
+   *
+   * @return 현재 계정 정보 또는 null
+   */
   public Account getCurrentAccount() {
     return SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof Account ? (Account) SecurityContextHolder.getContext().getAuthentication().getPrincipal() : null;
   }

@@ -51,6 +51,12 @@ public class GlobalControllerAdvice {
         HttpStatus.BAD_REQUEST);
   }
 
+  /**
+   * MethodArgumentNotValidException을 처리하는 메서드.
+   *
+   * @param e 처리할 MethodArgumentNotValidException
+   * @return ResponseEntity에 포함된 오류 메시지와 함께 UNPROCESSABLE_ENTITY 상태 반환
+   */
   @ExceptionHandler
   public ResponseEntity<Response<?>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
     log.error("MethodArgumentNotValidException occurred in {}  {}  {}  {}  {}  {}  {}", 
@@ -147,6 +153,12 @@ public class GlobalControllerAdvice {
         HttpStatus.NOT_FOUND);
   }
 
+  /**
+   * AuthenticationException을 처리하는 메서드.
+   *
+   * @param e 처리할 BadCredentialsException
+   * @return ResponseEntity에 포함된 오류 메시지와 함께 UNAUTHORIZED 상태 반환
+   */
   @ExceptionHandler
   public ResponseEntity<Response<?>> handleAuthenticationException(BadCredentialsException e) {
     log.error("AuthenticationException occurred in {}  {}  {}  {}  {}  {}", 
@@ -158,6 +170,12 @@ public class GlobalControllerAdvice {
     return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), e.getMessage()), HttpStatus.UNAUTHORIZED);
   }
 
+  /**
+   * HttpMessageNotReadableException을 처리하는 메서드.
+   *
+   * @param e 처리할 HttpMessageNotReadableException
+   * @return ResponseEntity에 포함된 오류 메시지와 함께 UNPROCESSABLE_ENTITY 상태 반환
+   */
   @ExceptionHandler
   public ResponseEntity<Response<?>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
     log.error("HttpMessageNotReadableException occurred in {}  {}  {}  {}  {}  {}", 
@@ -169,6 +187,12 @@ public class GlobalControllerAdvice {
     return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.UNPROCESSABLE_ENTITY.value(), "올바른 형식이 아닙니다."), HttpStatus.UNPROCESSABLE_ENTITY);
   }
 
+  /**
+   * IllegalArgumentException을 처리하는 메서드.
+   *
+   * @param e 처리할 IllegalArgumentException
+   * @return ResponseEntity에 포함된 오류 메시지와 함께 BAD_REQUEST 상태 반환
+   */
   @ExceptionHandler
   public ResponseEntity<Response<?>> handleIllegalArgumentException(IllegalArgumentException e) {
     log.error("IllegalArgumentException occurred in {}  {}  {}  {}  {}  {}", 
@@ -180,6 +204,12 @@ public class GlobalControllerAdvice {
     return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
   }
 
+  /**
+   * JwtException을 처리하는 메서드.
+   *
+   * @param e 처리할 JwtException
+   * @return ResponseEntity에 포함된 오류 메시지와 함께 UNAUTHORIZED 상태 반환
+   */
   @ExceptionHandler
   public ResponseEntity<Response<?>> handleJwtException(JwtException e) {
     log.error("JwtException occurred in {}  {}  {}  {}  {}  {}", 

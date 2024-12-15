@@ -27,6 +27,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 북마크 관련 서비스 로직을 처리하는 서비스 클래스입니다.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,13 +39,20 @@ public class BookmarksService {
   private final JobPostingRepository jobPostingRepository;
   private final JsonWebTokenProvider tokenProvider;
 
-@Transactional
-public Response<?> readBookmark(HttpServletRequest httpRequest, BookmarksGetRequest request) {
-  if (tokenProvider.getAccessTokenFromRequest(httpRequest) == null) {
-    return Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), "인증이 필요합니다.");
-  }
+  /**
+   * 사용자의 북마크를 조회합니다.
+   *
+   * @param httpRequest HTTP 요청 객체
+   * @param request     북마크 조회 요청 DTO
+   * @return 조회 결과를 포함한 응답 객체
+   */
+  @Transactional
+  public Response<?> readBookmark(HttpServletRequest httpRequest, BookmarksGetRequest request) {
+    if (tokenProvider.getAccessTokenFromRequest(httpRequest) == null) {
+      return Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), "인증이 필요합니다.");
+    }
 
-  tokenProvider.validateToken(tokenProvider.getAccessTokenFromRequest(httpRequest));
+    tokenProvider.validateToken(tokenProvider.getAccessTokenFromRequest(httpRequest));
 
     Bookmark bookmark = getBookmarkByRequest(httpRequest);
 
@@ -68,9 +78,15 @@ public Response<?> readBookmark(HttpServletRequest httpRequest, BookmarksGetRequ
     Page<JobPostingDetailResponse> page = new PageImpl<>(pageContent, pageable, responses.size());
 
     return Response.createResponse(HttpStatus.OK.value(), "북마크 조회 성공", page);
-}
+  }
 
-
+  /**
+   * 특정 잡 포스팅을 사용자의 북마크에 추가합니다.
+   *
+   * @param jobPostingId 추가할 잡 포스팅의 ID
+   * @param request      HTTP 요청 객체
+   * @return 추가 결과를 포함한 응답 객체
+   */
   @Transactional
   public Response<?> addPostingIntoBookmark(Long jobPostingId, HttpServletRequest request) {
     Bookmark bookmark = getBookmarkByRequest(request);
@@ -92,6 +108,13 @@ public Response<?> readBookmark(HttpServletRequest httpRequest, BookmarksGetRequ
     return Response.createResponse(HttpStatus.CREATED.value(), "북마크 추가 성공", response);
   }
 
+  /**
+   * 특정 잡 포스팅을 사용자의 북마크에서 제거합니다.
+   *
+   * @param jobPostingId 제거할 잡 포스팅의 ID
+   * @param request      HTTP 요청 객체
+   * @return 제거 결과를 포함한 응답 객체
+   */
   @Transactional
   public Response<?> removePostingFromBookmark(Long jobPostingId, HttpServletRequest request) {
     Bookmark bookmark = getBookmarkByRequest(request);
@@ -106,49 +129,56 @@ public Response<?> readBookmark(HttpServletRequest httpRequest, BookmarksGetRequ
     return Response.createResponseWithoutData(HttpStatus.NO_CONTENT.value(), "북마크 삭제 성공");
   }
 
+  /**
+   * 요청으로부터 사용자의 북마크를 조회합니다.
+   *
+   * @param request HTTP 요청 객체
+   * @return 사용자의 북마크 엔티티
+   */
   @Transactional
   public Bookmark getBookmarkByRequest(HttpServletRequest request) {
     String username = tokenProvider.getUsernameFromRequest(request).orElseThrow(
-      () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.")
-    );
+        () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."));
 
     Account account = accountRepository.findByUsername(username).orElseThrow(
-      () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계정을 찾을 수 없습니다.")
-    );
+        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계정을 찾을 수 없습니다."));
 
     Bookmark bookmark = bookmarkRepository.findByAccountId(account.getId()).orElse(null);
 
     if (bookmark == null) {
       bookmark = Bookmark.builder()
-        .account(account)
-        .build();
+          .account(account)
+          .build();
       bookmarkRepository.save(bookmark);
     }
 
     return bookmark;
   }
 
+  /**
+   * 요청으로부터 사용자의 북마크를 페이징 처리하여 조회합니다.
+   *
+   * @param httpRequest HTTP 요청 객체
+   * @param request     북마크 조회 요청 DTO
+   * @return 페이징 처리된 북마크 페이지
+   */
   @Transactional
   public Page<Bookmark> getBookmarkByRequestWithPageable(HttpServletRequest httpRequest, BookmarksGetRequest request) {
     String username = tokenProvider.getUsernameFromRequest(httpRequest).orElseThrow(
-      () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.")
-    );
+        () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."));
 
     Account account = accountRepository.findByUsername(username).orElseThrow(
-      () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계정을 찾을 수 없습니다.")
-    );
+        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계정을 찾을 수 없습니다."));
 
     Bookmark bookmark = bookmarkRepository.findByAccountId(account.getId()).orElse(null);
 
     if (bookmark == null) {
       bookmark = Bookmark.builder()
-        .account(account)
-        .build();
+          .account(account)
+          .build();
       bookmarkRepository.save(bookmark);
     }
 
     return bookmarkRepository.findByAccountId(account.getId(), request.toPageable());
   }
 }
-
-

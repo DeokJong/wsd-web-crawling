@@ -23,6 +23,9 @@ import com.wsd.web.wsd_web_crawling.jobs.service.JobService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 채용 공고 관련 요청을 처리하는 컨트롤러 클래스입니다.
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/jobs")
@@ -31,13 +34,19 @@ public class JobController {
 
   private final JobService jobService;
 
+  /**
+   * 채용 공고의 요약 정보를 조회합니다.
+   *
+   * @param requestDto 채용 공고 요약 요청 DTO
+   * @return ResponseEntity<Response<?>> 채용 공고 요약 조회 결과
+   */
   @GetMapping("/")
   public ResponseEntity<Response<?>> getJobsSummary(JobPostingsSummaryRequest requestDto) {
       Page<JobPosting> jobs = jobService.getJobPostings(requestDto);
   
       Page<JobPostingsSummaryResponse> body = jobs.map(jobPosting -> {
           JobPostingsSummaryResponse response = new JobPostingsSummaryResponse();
-          response.updateFrom(jobPosting);  // 인스턴스 메서드 호출
+          response.updateFrom(jobPosting);
           return response;
       });
   
@@ -45,9 +54,13 @@ public class JobController {
           Response.createResponse(HttpStatus.OK.value(), "채용 공고 요약 조회 성공", body)
       );
   }
-  
 
-  // 공고 상세 조회 (GET /jobs/{id})
+  /**
+   * 특정 공고의 상세 정보를 조회합니다.
+   *
+   * @param id 조회할 공고의 ID
+   * @return ResponseEntity<Response<?>> 공고 상세 조회 결과
+   */
   @GetMapping("/{id}")
   public ResponseEntity<Response<?>> getJobsDetail(@PathVariable("id") Long id) {
     jobService.incrementViewCount(id);
@@ -58,13 +71,17 @@ public class JobController {
           .body(Response.createResponse(HttpStatus.NOT_FOUND.value(), "공고를 찾을 수 없습니다.", null));
     }
 
-
     JobPostingDetailResponse body = new JobPostingDetailResponse();
     body.updateFrom(jobPosting);
     return ResponseEntity.ok(Response.createResponse(HttpStatus.OK.value(), "공고 상세 조회 성공", body));
   }
 
-  // 공고 등록 (POST /jobs)
+  /**
+   * 새로운 채용 공고를 등록합니다.
+   *
+   * @param requestDto 등록할 채용 공고의 상세 정보 DTO
+   * @return ResponseEntity<Response<?>> 공고 등록 결과
+   */
   @PostMapping("/")
   public ResponseEntity<Response<?>> createJobPosting(@RequestBody JobPostingDetailRequest requestDto) {
     JobPosting createdJob = jobService.createJobPosting(requestDto);
@@ -76,7 +93,13 @@ public class JobController {
         .body(Response.createResponse(HttpStatus.CREATED.value(), "공고 등록 성공", body));
   }
 
-  // 공고 수정 (PUT /jobs/{id})
+  /**
+   * 기존 채용 공고를 수정합니다.
+   *
+   * @param id 수정할 공고의 ID
+   * @param requestDto 수정할 채용 공고의 상세 정보 DTO
+   * @return ResponseEntity<Response<?>> 공고 수정 결과
+   */
   @PutMapping("/{id}")
   public ResponseEntity<Response<?>> updateJobPosting(@PathVariable("id") Long id, @RequestBody JobPostingDetailRequest requestDto) {
     JobPosting updatedJob = jobService.updateJobPosting(id, requestDto);
@@ -91,7 +114,12 @@ public class JobController {
     return ResponseEntity.ok(Response.createResponse(HttpStatus.OK.value(), "공고 수정 성공", body));
   }
 
-  // 공고 삭제 (DELETE /jobs/{id})
+  /**
+   * 특정 채용 공고를 삭제합니다.
+   *
+   * @param id 삭제할 공고의 ID
+   * @return ResponseEntity<Response<?>> 공고 삭제 결과
+   */
   @DeleteMapping("/{id}")
   public ResponseEntity<Response<?>> deleteJobPosting(@PathVariable("id") Long id) {
     boolean isDeleted = jobService.deleteJobPosting(id);

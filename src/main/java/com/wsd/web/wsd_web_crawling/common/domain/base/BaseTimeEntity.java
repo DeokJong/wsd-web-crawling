@@ -17,15 +17,24 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * BaseTimeEntity 클래스는 생성 및 수정 시간을 추적하는 기본 엔티티 클래스입니다.
+ */
 @Slf4j
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 public class BaseTimeEntity {
 
+  /**
+   * 엔티티가 생성된 시간을 저장합니다.
+   */
   @CreatedDate
   private LocalDateTime createdAt;
 
+  /**
+   * 엔티티가 마지막으로 수정된 시간을 저장합니다.
+   */
   @LastModifiedDate
   private LocalDateTime updatedAt;
 
@@ -59,7 +68,7 @@ public class BaseTimeEntity {
         Field targetField = findFieldInHierarchy(targetClass, sourceField.getName());
 
         if (targetField == null) {
-          log.debug("필드 없음: {}", sourceField.getName());
+          log.debug("필드 없��: {}", sourceField.getName());
           continue;
         }
 
@@ -73,6 +82,12 @@ public class BaseTimeEntity {
     }
   }
 
+  /**
+   * 주어진 클래스의 필드를 캐시에서 가져옵니다.
+   * 
+   * @param clazz 필드를 가져올 클래스
+   * @return 클래스의 필드 배열
+   */
   private Field[] getFieldsFromCache(Class<?> clazz) {
     return fieldCache.computeIfAbsent(clazz, key -> {
       Map<String, Field> fields = new ConcurrentHashMap<>();
@@ -87,6 +102,13 @@ public class BaseTimeEntity {
     }).values().toArray(new Field[0]);
   }
 
+  /**
+   * 클래스 계층 구조에서 지정된 필드를 찾습니다.
+   * 
+   * @param clazz 필드를 찾을 클래스
+   * @param fieldName 찾을 필드 이름
+   * @return 찾은 필드 또는 null
+   */
   private Field findFieldInHierarchy(Class<?> clazz, String fieldName) {
     return fieldCache.computeIfAbsent(clazz, key -> {
       Map<String, Field> fieldMap = new ConcurrentHashMap<>();

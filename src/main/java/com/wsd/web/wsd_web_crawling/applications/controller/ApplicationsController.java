@@ -27,6 +27,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 애플리케이션 관련 API 요청을 처리하는 컨트롤러입니다.
+ */
 @RestController
 @RequestMapping("/api/applications")
 @RequiredArgsConstructor
@@ -35,6 +38,13 @@ public class ApplicationsController {
 
   private final ApplicationsService applicationsService;
 
+  /**
+   * 모든 애플리케이션을 조회합니다.
+   *
+   * @param requestDto 애플리케이션 조회 요청 DTO
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 조회된 애플리케이션 목록과 상태를 포함한 응답
+   */
   @GetMapping("/")
   public ResponseEntity<Response<?>> getApplications(
     @Valid @ModelAttribute ApplicationGetRequest requestDto,
@@ -45,6 +55,13 @@ public class ApplicationsController {
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 
+  /**
+   * 새로운 애플리케이션을 추가합니다.
+   *
+   * @param requestDto 애플리케이션 추가 요청 DTO
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 추가된 애플리케이션 정보와 상태를 포함한 응답
+   */
   @PostMapping("/")
   public ResponseEntity<Response<?>> addApplication(
     @Valid @RequestBody ApplicationPostRequest requestDto,
@@ -55,6 +72,13 @@ public class ApplicationsController {
     return new ResponseEntity<>(body, HttpStatus.valueOf(body.getStatus()));
   }
 
+  /**
+   * 특정 애플리케이션을 삭제합니다.
+   *
+   * @param applicationId 삭제할 애플리케이션의 ID
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 삭제 결과와 상태를 포함한 응답
+   */
   @DeleteMapping("/{application_id}")
   public ResponseEntity<Response<?>> deleteApplication(
     @PathVariable(required = true, name = "application_id") Long applicationId,
@@ -64,6 +88,14 @@ public class ApplicationsController {
     return new ResponseEntity<>(body, HttpStatus.valueOf(body.getStatus()));
   }
 
+  /**
+   * 특정 애플리케이션을 업데이트합니다.
+   *
+   * @param applicationId 업데이트할 애플리케이션의 ID
+   * @param requestDto 애플리케이션 업데이트 요청 DTO
+   * @param httpServletRequest HTTP 요청 정보
+   * @return 업데이트된 애플리케이션 정보와 상태를 포함한 응답
+   */
   @PutMapping("/{application_id}")
   public ResponseEntity<Response<?>> updateApplication(
     @PathVariable(required = true, name = "application_id")

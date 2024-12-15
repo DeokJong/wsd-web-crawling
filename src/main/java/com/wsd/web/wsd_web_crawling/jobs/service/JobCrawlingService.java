@@ -23,7 +23,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-
+/**
+ * JobCrawlingService는 잡코리아의 채용 공고를 크롤링하여 데이터베이스에 저장하는 서비스를 제공합니다.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -34,6 +36,13 @@ public class JobCrawlingService {
 
   private final Executor executor = Executors.newFixedThreadPool(5); // 동시 작업 개수 제한
 
+  /**
+   * 잡코리아에서 채용 공고를 비동기적으로 크롤링합니다.
+   *
+   * @param jobsRequest 채용 공고 요청 정보
+   * @param totalCount 총 크롤링할 페이지 수
+   * @return 모든 크롤링 작업이 완료될 때까지의 CompletableFuture
+   */
   @Async
   @Transactional
   public CompletableFuture<Void> crawlSaramin(JobPostingsSummaryRequest jobsRequest, int totalCount) {
@@ -58,6 +67,16 @@ public class JobCrawlingService {
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
   }
 
+  /**
+   * 지정된 페이지 범위 내에서 잡코리아의 채용 공고를 크롤링합니다.
+   *
+   * @param jobsRequest 채용 공고 요청 정보
+   * @param initPageParams 시작 페이지 번호
+   * @param endPageParams 종료 페이지 번호
+   * @return 모든 페이지 크롤링 작업이 완료될 때까지의 CompletableFuture
+   * @throws IOException 입출력 예외
+   * @throws InterruptedException 인터럽트 예외
+   */
   @Async
   @Transactional
   public CompletableFuture<Void> crawlSaramin(JobPostingsSummaryRequest jobsRequest, int initPageParams, int endPageParams)
@@ -88,6 +107,11 @@ public class JobCrawlingService {
     return CompletableFuture.completedFuture(null);
   }
 
+  /**
+   * 크롤링한 잡 요소들을 처리하여 데이터베이스에 저장합니다.
+   *
+   * @param jobElements 잡 요소들
+   */
   @Transactional
   private void processJobElements(Elements jobElements) {
     for (Element element : jobElements) {

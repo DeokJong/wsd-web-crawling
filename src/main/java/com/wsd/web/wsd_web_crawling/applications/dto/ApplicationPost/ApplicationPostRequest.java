@@ -9,13 +9,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter @Setter
+/**
+ * 구인 정보 요청을 위한 데이터 전송 객체입니다.
+ */
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class ApplicationPostRequest {
-  @NotNull
-  @Min(1)
-  @Max(9999999999L)
-  @Schema(description = "구인 정보 ID", example = "1")
-  private Long postingId;
+
+    /**
+     * 구인 정보 ID를 나타냅니다.
+     */
+    @NotNull
+    @Min(1)
+    @Max(9999999999L)
+    @Schema(description = "구인 정보 ID", example = "1")
+    private Long postingId;
 }
