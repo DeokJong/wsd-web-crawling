@@ -4,17 +4,20 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.wsd.web.wsd_web_crawling.common.dto.FieldErrorResponse;
 import com.wsd.web.wsd_web_crawling.common.dto.InvalidRequestException;
 import com.wsd.web.wsd_web_crawling.common.dto.Response;
 
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -88,6 +91,8 @@ public class GlobalControllerAdvice {
     } else if (e instanceof InvalidRequestException) {
         ResponseEntity<Response<List<FieldErrorResponse>>> response = handleInvalidRequestException((InvalidRequestException) e);
         return new ResponseEntity<>(response.getBody(), response.getStatusCode());
+    } else if (e instanceof ResponseStatusException) {
+        return new ResponseEntity<>(Response.createResponseWithoutData(((ResponseStatusException) e).getStatusCode().value(), e.getMessage()), ((ResponseStatusException) e).getStatusCode());
     }
     
     log.error("Generic Exception occurred in {}  {}  {}  {}  {}  {}", 
@@ -145,6 +150,39 @@ public class GlobalControllerAdvice {
   @ExceptionHandler
   public ResponseEntity<Response<?>> handleAuthenticationException(BadCredentialsException e) {
     log.error("AuthenticationException occurred in {}  {}  {}  {}  {}  {}", 
+              e.getClass().getSimpleName(), 
+              e.getMessage(), 
+              e.getStackTrace()[0].toString(),
+              e.getStackTrace()[1].toString(),
+              e.getStackTrace()[2].toString());
+    return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), e.getMessage()), HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Response<?>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+    log.error("HttpMessageNotReadableException occurred in {}  {}  {}  {}  {}  {}", 
+              e.getClass().getSimpleName(), 
+              e.getMessage(), 
+              e.getStackTrace()[0].toString(),
+              e.getStackTrace()[1].toString(),
+              e.getStackTrace()[2].toString());
+    return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.UNPROCESSABLE_ENTITY.value(), "올바른 형식이 아닙니다."), HttpStatus.UNPROCESSABLE_ENTITY);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Response<?>> handleIllegalArgumentException(IllegalArgumentException e) {
+    log.error("IllegalArgumentException occurred in {}  {}  {}  {}  {}  {}", 
+              e.getClass().getSimpleName(), 
+              e.getMessage(), 
+              e.getStackTrace()[0].toString(),
+              e.getStackTrace()[1].toString(),
+              e.getStackTrace()[2].toString());
+    return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Response<?>> handleJwtException(JwtException e) {
+    log.error("JwtException occurred in {}  {}  {}  {}  {}  {}", 
               e.getClass().getSimpleName(), 
               e.getMessage(), 
               e.getStackTrace()[0].toString(),

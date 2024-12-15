@@ -1,15 +1,19 @@
 package com.wsd.web.wsd_web_crawling.bookmarks.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.wsd.web.wsd_web_crawling.authentication.components.JsonWebTokenProvider;
-import com.wsd.web.wsd_web_crawling.bookmarks.dto.BookmarksResponse;
+import com.wsd.web.wsd_web_crawling.bookmarks.dto.BookmarksGetRequest;
 import com.wsd.web.wsd_web_crawling.common.domain.Account;
 import com.wsd.web.wsd_web_crawling.common.domain.Bookmark;
 import com.wsd.web.wsd_web_crawling.common.domain.JobPosting;
@@ -33,21 +37,23 @@ public class BookmarksService {
   private final JsonWebTokenProvider tokenProvider;
 
 @Transactional
-public Response<?> readBookmark(HttpServletRequest request) {
-  if (tokenProvider.getAccessTokenFromRequest(request) == null) {
+public Response<?> readBookmark(HttpServletRequest httpRequest, BookmarksGetRequest request) {
+  if (tokenProvider.getAccessTokenFromRequest(httpRequest) == null) {
     return Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), "인증이 필요합니다.");
   }
 
-  tokenProvider.validateToken(tokenProvider.getAccessTokenFromRequest(request));
+  tokenProvider.validateToken(tokenProvider.getAccessTokenFromRequest(httpRequest));
 
-    Bookmark bookmark = getBookmarkByRequest(request);
+    Bookmark bookmark = getBookmarkByRequest(httpRequest);
 
     if (bookmark.getJobPostings() == null) {
       return Response.createResponseWithoutData(HttpStatus.OK.value(), "북마크가 비어있습니다.");
     }
 
-    // 트랜잭션 범위 내에서 jobPostings 접근 및 DTO 변환
-    List<JobPostingDetailResponse> jobPostingDetailResponses = bookmark.getJobPostings().stream()
+    Pageable pageable = request.toPageable();
+
+    List<JobPostingDetailResponse> responses = bookmark.getJobPostings()
+        .stream()
         .map(jobPosting -> {
           JobPostingDetailResponse response = new JobPostingDetailResponse();
           response.updateFrom(jobPosting);
@@ -55,12 +61,13 @@ public Response<?> readBookmark(HttpServletRequest request) {
         })
         .collect(Collectors.toList());
 
-    // BookmarksResponse DTO 생성 및 데이터 설정
-    BookmarksResponse response = new BookmarksResponse();
-    response.updateFrom(bookmark);
-    response.setJobPostingDetailResponses(jobPostingDetailResponses);
+    int start = (int) pageable.getOffset();
+    int end = Math.min((start + pageable.getPageSize()), responses.size());
+    List<JobPostingDetailResponse> pageContent = start > end ? new ArrayList<>() : responses.subList(start, end);
 
-    return Response.createResponse(HttpStatus.OK.value(), "북마크 조회 성공", response);
+    Page<JobPostingDetailResponse> page = new PageImpl<>(pageContent, pageable, responses.size());
+
+    return Response.createResponse(HttpStatus.OK.value(), "북마크 조회 성공", page);
 }
 
 
@@ -70,14 +77,19 @@ public Response<?> readBookmark(HttpServletRequest request) {
     JobPosting jobPosting = jobPostingRepository.findById(jobPostingId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "잡 포스팅을 찾을 수 없습니다."));
 
+    if (bookmark.getJobPostings().contains(jobPosting)) {
+      return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "이미 북마크에 존재하는 잡 포스팅입니다.");
+    }
+
     List<JobPosting> bookmarkJobPosting = bookmark.getJobPostings();
     bookmarkJobPosting.add(jobPosting);
     bookmark.setJobPostings(bookmarkJobPosting);
     bookmarkRepository.save(bookmark);
 
-    BookmarksResponse response = new BookmarksResponse();
-    response.updateFrom(bookmark);
-    return Response.createResponse(HttpStatus.OK.value(), "북마크 추가 성공", response);
+    JobPostingDetailResponse response = new JobPostingDetailResponse();
+    response.updateFrom(jobPosting);
+
+    return Response.createResponse(HttpStatus.CREATED.value(), "북마크 추가 성공", response);
   }
 
   @Transactional
@@ -91,9 +103,7 @@ public Response<?> readBookmark(HttpServletRequest request) {
     bookmark.setJobPostings(bookmarkJobPosting);
     bookmarkRepository.save(bookmark);
 
-    BookmarksResponse response = new BookmarksResponse();
-    response.updateFrom(bookmark);
-    return Response.createResponse(HttpStatus.OK.value(), "북마크 삭제 성공", response);
+    return Response.createResponseWithoutData(HttpStatus.NO_CONTENT.value(), "북마크 삭제 성공");
   }
 
   @Transactional
@@ -116,6 +126,28 @@ public Response<?> readBookmark(HttpServletRequest request) {
     }
 
     return bookmark;
+  }
+
+  @Transactional
+  public Page<Bookmark> getBookmarkByRequestWithPageable(HttpServletRequest httpRequest, BookmarksGetRequest request) {
+    String username = tokenProvider.getUsernameFromRequest(httpRequest).orElseThrow(
+      () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.")
+    );
+
+    Account account = accountRepository.findByUsername(username).orElseThrow(
+      () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계정을 찾을 수 없습니다.")
+    );
+
+    Bookmark bookmark = bookmarkRepository.findByAccountId(account.getId()).orElse(null);
+
+    if (bookmark == null) {
+      bookmark = Bookmark.builder()
+        .account(account)
+        .build();
+      bookmarkRepository.save(bookmark);
+    }
+
+    return bookmarkRepository.findByAccountId(account.getId(), request.toPageable());
   }
 }
 

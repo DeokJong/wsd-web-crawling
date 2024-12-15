@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.wsd.web.wsd_web_crawling.applications.dto.ApplicationDTO;
 import com.wsd.web.wsd_web_crawling.applications.dto.ApplicationGet.ApplicationGetRequest;
 import com.wsd.web.wsd_web_crawling.applications.dto.ApplicationPost.ApplicationPostRequest;
+import com.wsd.web.wsd_web_crawling.applications.dto.ApplicationUpdateRequest.ApplicationUpdateRequest;
 import com.wsd.web.wsd_web_crawling.authentication.components.JsonWebTokenProvider;
 import com.wsd.web.wsd_web_crawling.common.domain.Account;
 import com.wsd.web.wsd_web_crawling.common.dto.Response;
@@ -48,7 +49,14 @@ public class ApplicationsService {
 
         // 중복 지원 체크
         if (applicationRepository.findByAccountAndJobPostingId(account, request.getPostingId()).isPresent()) {
-          return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "이미 지원한 공고입니다.");
+          Application application = applicationRepository.findByAccountAndJobPostingId(account, request.getPostingId()).get();
+          if (application.getStatus() != ApplicationStatus.CANCELLED) {
+            return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "이미 지원한 공고입니다.");
+          }
+        }
+
+        if (jobPostingRepository.findById(request.getPostingId()).orElse(null) == null) {
+          return Response.createResponseWithoutData(HttpStatus.NOT_FOUND.value(), "존재하지 않는 구인 정보입니다.");
         }
         
         Application application = Application.builder()
@@ -70,15 +78,11 @@ public class ApplicationsService {
             .jobPostingLink(application.getJobPosting().getLink())
             .build();
         
-        return Response.createResponse(HttpStatus.OK.value(), "지원 추가 성공", response);
+        return Response.createResponse(HttpStatus.CREATED.value(), "지원 추가 성공", response);
     }
     
     @Transactional(readOnly = true)
-    public Response<?> getApplications(ApplicationGetRequest request, HttpServletRequest httpServletRequest) {
-        log.info("request.status : {}", request.getStatus());
-        log.info("request.dateOrder : {}", request.getDateOrder());
-        log.info("request.page : {}", request.getPage());
-        log.info("request.size : {}", request.getSize());
+    public Response<?> getApplications(HttpServletRequest httpServletRequest, ApplicationGetRequest request) {
         Optional<String> username = jsonWebTokenProvider.getUsernameFromRequest(httpServletRequest);
         Account account = accountRepository.findByUsername(username.get()).orElse(null);
         Page<Application> pageApplications;
@@ -112,6 +116,10 @@ public class ApplicationsService {
         Account account = accountRepository.findByUsername(username.get()).orElse(null);
         Application application = applicationRepository.findById(applicationId).orElse(null);
 
+        if (application == null) {
+          return Response.createResponseWithoutData(HttpStatus.NOT_FOUND.value(), "아직 아무것도 지원하지 않았습니다.");
+        }
+
         if (account == null) {
           return Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), "인증되지 않은 사용자입니다.");
         }
@@ -124,9 +132,49 @@ public class ApplicationsService {
           return Response.createResponseWithoutData(HttpStatus.NOT_FOUND.value(), "지원 내역을 찾을 수 없습니다.");
         }
 
+        if (application.getStatus() == ApplicationStatus.CANCELLED) {
+          return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "이미 취소된 지원 내역입니다.");
+        } else if (application.getStatus() == ApplicationStatus.INTERVIEW) {
+          return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "면접 중인 지원 내역입니다. 취소 할 수 없습니다.");
+        } else if (application.getStatus() == ApplicationStatus.HIRED) {
+          return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "채용된 지원 내역입니다. 취소 할 수 없습니다.");
+        } else if (application.getStatus() == ApplicationStatus.REJECTED) {
+          return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "거절된 지원 내역입니다. 취소 할 수 없습니다.");
+        } else if (application.getStatus() == ApplicationStatus.UNDER_REVIEW) {
+          return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "검토 중인 지원 내역입니다. 취소 할 수 없습니다.");
+        } else if (application.getStatus() == ApplicationStatus.ALL) {
+          return Response.createResponseWithoutData(HttpStatus.UNPROCESSABLE_ENTITY.value(), "취소할 수 없는 상태의 지원 내역입니다.");
+        }
+
+
         application.setStatus(ApplicationStatus.CANCELLED);
 
 
-        return Response.createResponseWithoutData(HttpStatus.OK.value(), "지원 취소 성공");
+        return Response.createResponseWithoutData(HttpStatus.NO_CONTENT.value(), "지원 취소 성공");
+    }
+
+    public Response<?> updateApplication(
+      Long applicationId,
+      ApplicationUpdateRequest requestDto,
+      HttpServletRequest httpServletRequest) {
+        Optional<String> username = jsonWebTokenProvider.getUsernameFromRequest(httpServletRequest);
+        Account account = accountRepository.findByUsername(username.get()).orElse(null);
+        Application application = applicationRepository.findById(applicationId).orElse(null);
+
+        if (application == null) {
+          return Response.createResponseWithoutData(HttpStatus.NOT_FOUND.value(), "지원 내역을 찾을 수 없습니다.");
+        }
+
+        if (account == null) {
+          return Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), "인증되지 않은 사용자입니다.");
+        }
+
+        if (!application.getAccount().getId().equals(account.getId()) && application != null) {
+          return Response.createResponseWithoutData(HttpStatus.FORBIDDEN.value(), "접근 권한이 없습니다.");
+        }
+
+        application.setStatus(requestDto.getStatus());
+
+        return Response.createResponseWithoutData(HttpStatus.OK.value(), "지원 상태 변경 성공");
     }
 }

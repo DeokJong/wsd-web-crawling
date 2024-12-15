@@ -2,6 +2,8 @@ package com.wsd.web.wsd_web_crawling.common.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,10 +19,11 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Response<T> {
 
-    private LocalDateTime timestamp;
-    private int status;
-    private String message;
-    private T data;
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime timestamp;
+  private int status;
+  private String message;
+  private T data;
 
     /**
      * 응답 객체를 생성하는 생성자입니다.

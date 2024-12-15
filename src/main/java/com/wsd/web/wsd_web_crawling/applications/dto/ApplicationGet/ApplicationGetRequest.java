@@ -6,6 +6,7 @@ import com.wsd.web.wsd_web_crawling.common.model.DateOrder;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -23,10 +24,12 @@ import org.springframework.data.domain.Sort;
 public class ApplicationGetRequest extends BasePageableDto {
 
   @Schema(description = "지원 상태 (APPLIED, REJECTED, INTERVIEW, UNDER_REVIEW, HIRED, CANCELLED, UNKNOWN, All)", example = "APPLIED")
-  private ApplicationStatus status;
+  @Builder.Default
+  private ApplicationStatus status = ApplicationStatus.ALL;
 
   @Schema(description = "날짜 정렬(ASC, DESC)", example = "ASC")
-  private DateOrder dateOrder;
+  @Builder.Default
+  private DateOrder dateOrder = DateOrder.ASC;
 
   @Override
   public Pageable toPageable() {

@@ -99,7 +99,7 @@ public class JobController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
           .body(Response.createResponse(HttpStatus.NOT_FOUND.value(), "공고를 찾을 수 없습니다.", null));
     }
-    return ResponseEntity.ok(Response.createResponse(HttpStatus.OK.value(), "공고 삭제 성공", null));
+    return ResponseEntity.ok(Response.createResponse(HttpStatus.NO_CONTENT.value(), "공고 삭제 성공", null));
   }
 }
 
