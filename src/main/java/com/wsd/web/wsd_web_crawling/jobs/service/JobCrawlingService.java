@@ -62,29 +62,29 @@ public class JobCrawlingService {
   @Transactional
   public CompletableFuture<Void> crawlSaramin(JobPostingsSummaryRequest jobsRequest, int initPageParams, int endPageParams)
       throws IOException, InterruptedException {
-
-    log.info("crawlSaramin start: {} - {}", initPageParams, endPageParams);
-
-    for (int pageParams = initPageParams; pageParams <= endPageParams; pageParams++) {
-      String url = "https://www.saramin.co.kr/zf_user/search/recruit?searchType=search"
+        
+        for (int pageParams = initPageParams; pageParams <= endPageParams; pageParams++) {
+          String url = "https://www.saramin.co.kr/zf_user/search/recruit?searchType=search"
           + "&searchword=" + jobsRequest.getKeyword()
           + "&recruitPage=" + pageParams
           + "&recruitPageCount=6"
           + "&loc_cd=" + (locationResolver.resolve(jobsRequest.getLocation()) == null ? ""
-              : locationResolver.resolve(jobsRequest.getLocation()));
+          : locationResolver.resolve(jobsRequest.getLocation()));
+          
+          Document document = HtmlParser.connectToUrl(url);
+          Elements jobElements = HtmlParser.selectElements(document, ".item_recruit");
+          
+          if (jobElements.size() == 0) {
+            log.info("No job postings found on page {}", pageParams);
+            break;
+          }
+          
+          processJobElements(jobElements);
+          Thread.sleep(1000); // 서버 부하 방지를 위한 딜레이
+        }
 
-      Document document = HtmlParser.connectToUrl(url);
-      Elements jobElements = HtmlParser.selectElements(document, ".item_recruit");
-
-      if (jobElements.size() == 0) {
-        log.info("No job postings found on page {}", pageParams);
-        break;
-      }
-
-      processJobElements(jobElements);
-      Thread.sleep(1000); // 서버 부하 방지를 위한 딜레이
-    }
-
+        log.info("crawlSaramin end: {}, {}", initPageParams, endPageParams);
+        
     return CompletableFuture.completedFuture(null);
   }
 
