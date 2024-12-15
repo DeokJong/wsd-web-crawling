@@ -84,12 +84,11 @@ public class AuthContoller {
    * @return 토큰 갱신 성공 응답
    */
   @PostMapping("/refresh")
-  public ResponseEntity<Response<?>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+  public ResponseEntity<Response<?>> refreshToken(HttpServletRequest request, HttpServletResponse httpResponse) {
 
-    authService.getAccessTokenRefresh(request, response);
+    Response<?> response = authService.getAccessTokenRefresh(request, httpResponse);
 
-    Response<?> body = Response.createResponseWithoutData(200, "토큰 갱신 성공");
-    return new ResponseEntity<>(body, HttpStatus.OK);
+    return new ResponseEntity<>(response, HttpStatus.valueOf(response.getStatus()));
   }
 
   /**

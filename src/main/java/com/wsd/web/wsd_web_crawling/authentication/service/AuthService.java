@@ -15,15 +15,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.wsd.web.wsd_web_crawling.authentication.components.JsonWebTokenProvider;
+import com.wsd.web.wsd_web_crawling.authentication.components.RefreshTokenStore;
 import com.wsd.web.wsd_web_crawling.authentication.dto.AccountCreateRequest;
 import com.wsd.web.wsd_web_crawling.authentication.dto.AccountUpdateRequest;
 import com.wsd.web.wsd_web_crawling.authentication.dto.LoginRequest;
 import com.wsd.web.wsd_web_crawling.common.domain.Account;
 import com.wsd.web.wsd_web_crawling.common.domain.Bookmark;
+import com.wsd.web.wsd_web_crawling.common.dto.Response;
 import com.wsd.web.wsd_web_crawling.common.repository.AccountRepository;
 import com.wsd.web.wsd_web_crawling.common.repository.BookmarkRepository;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -39,6 +40,7 @@ public class AuthService {
   private final AccountRepository accountRepository;
   private final PasswordEncoder passwordEncoder;
   private final BookmarkRepository bookmarkRepository;
+  private final RefreshTokenStore refreshTokenStore;
 
   /**
    * 사용자 로그인 처리.
@@ -56,6 +58,8 @@ public class AuthService {
 
       String accessToken = tokenProvider.createToken(authentication);
       String refreshToken = tokenProvider.createRefreshToken(authentication);
+
+      refreshTokenStore.saveRefreshToken(authentication.getName(), refreshToken);
 
       response.addCookie(tokenProvider.createCookie(tokenProvider.AUTHORIZATION_HEADER_ACCESS, accessToken,
           tokenProvider.tokenValidityInMilliseconds));
@@ -105,20 +109,16 @@ public class AuthService {
    * @param request  HTTP 요청 객체
    * @param response HTTP 응답 객체
    */
-  public void getAccessTokenRefresh(HttpServletRequest request, HttpServletResponse response) {
-    Cookie[] cookies = request.getCookies();
-    String refreshToken = null;
+  public Response<?> getAccessTokenRefresh(HttpServletRequest request, HttpServletResponse response) {
+    String refreshToken = tokenProvider.getRefreshTokenFromRequest(request);
+    String accessToken = tokenProvider.createAccessTokenFromRefreshToken(refreshToken);
+    response.addCookie(tokenProvider.createCookie(tokenProvider.AUTHORIZATION_HEADER_ACCESS, accessToken, tokenProvider.tokenValidityInMilliseconds));
 
-    for (Cookie cookie : cookies) {
-      if (tokenProvider.AUTHORIZATION_HEADER_REFRESH.equals(cookie.getName())) {
-        refreshToken = cookie.getValue();
-      }
+    if (accessToken == null) {
+      return Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), "리프레시 토큰이 만료되었습니다.");
     }
 
-    if (refreshToken != null && tokenProvider.validateToken(refreshToken)) {
-      String accessToken = tokenProvider.createToken(tokenProvider.getAuthentication(refreshToken));
-      response.addCookie(tokenProvider.createCookie(tokenProvider.AUTHORIZATION_HEADER_ACCESS, accessToken, tokenProvider.tokenValidityInMilliseconds));
-    }
+    return Response.createResponseWithoutData(HttpStatus.OK.value(), "액세스 토큰이 갱신되었습니다.");
   }
 
   /**

@@ -32,23 +32,29 @@ import lombok.extern.slf4j.Slf4j;
 public class JsonWebTokenProvider {
   private static final String AUTHORITIES_KEY = "auth";
 
-  private final String secret;
+  private final String accessSecret;
+  private final String refreshSecret;
   public final long tokenValidityInMilliseconds;
   public final long refreshTokenValidityInMilliseconds;
   public final String AUTHORIZATION_HEADER_ACCESS;
   public final String AUTHORIZATION_HEADER_REFRESH;
   private final UserDetailsService userDetailsService;
+  private final RefreshTokenStore refreshTokenStore;
 
-  private Key key;
-  private JwtParser jwtParser;
+  private Key accessKey;
+  private JwtParser accessParser;
+  private Key refreshKey;
+  private JwtParser refreshParser;
 
   public JsonWebTokenProvider(
       @Value("${jwt.access-secret}") String secret,
+      @Value("${jwt.refresh-secret}") String refreshSecret,
       @Value("${jwt.access-token-validity-in-seconds}") long tokenValidityInSeconds,
       @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds,
       @Value("${jwt.authorization-header-access}") String AUTHORIZATION_HEADER_ACCESS,
       @Value("${jwt.authorization-header-refresh}") String AUTHORIZATION_HEADER_REFRESH,
-      UserDetailsService userDetailsService) {
+      UserDetailsService userDetailsService,
+      RefreshTokenStore refreshTokenStore) {
 
     if (tokenValidityInSeconds <= 0) {
       throw new IllegalArgumentException("토큰 유효 기간은 0보다 커야 합니다.");
@@ -58,19 +64,25 @@ public class JsonWebTokenProvider {
       throw new IllegalArgumentException("Refresh 토큰 유효 기간은 0보다 커야 합니다.");
     }
 
-    this.secret = secret;
+    this.accessSecret = secret;
+    this.refreshSecret = refreshSecret;
     this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
     this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;
     this.AUTHORIZATION_HEADER_ACCESS = AUTHORIZATION_HEADER_ACCESS;
     this.AUTHORIZATION_HEADER_REFRESH = AUTHORIZATION_HEADER_REFRESH;
     this.userDetailsService = userDetailsService;
+    this.refreshTokenStore = refreshTokenStore;
   }
 
   @PostConstruct
   public void init() {
-    byte[] keyBytes = Decoders.BASE64.decode(secret);
-    this.key = Keys.hmacShaKeyFor(keyBytes);
-    this.jwtParser = Jwts.parserBuilder().setSigningKey(key).build();
+    byte[] keyBytes = Decoders.BASE64.decode(accessSecret);
+    this.accessKey = Keys.hmacShaKeyFor(keyBytes);
+    this.accessParser = Jwts.parserBuilder().setSigningKey(accessKey).build();
+
+    byte[] refreshKeyBytes = Decoders.BASE64.decode(refreshSecret);
+    this.refreshKey = Keys.hmacShaKeyFor(refreshKeyBytes);
+    this.refreshParser = Jwts.parserBuilder().setSigningKey(refreshKey).build();
   }
 
   /**
@@ -92,7 +104,7 @@ public class JsonWebTokenProvider {
         .claim(AUTHORITIES_KEY, authorities)
         .setIssuedAt(now)
         .setExpiration(validity)
-        .signWith(key, SignatureAlgorithm.HS256)
+        .signWith(accessKey, SignatureAlgorithm.HS256)
         .compact();
   }
 
@@ -100,7 +112,7 @@ public class JsonWebTokenProvider {
    * Refresh Token 생성 메소드
    * 
    * @param authentication 인증 정보
-   * @return 생성된 Refresh Token
+   * @return 생성�� Refresh Token
    */
   public String createRefreshToken(Authentication authentication) {
     Date now = new Date();
@@ -110,22 +122,22 @@ public class JsonWebTokenProvider {
         .setSubject(authentication.getName())
         .setIssuedAt(now)
         .setExpiration(validity)
-        .signWith(key, SignatureAlgorithm.HS256)
+        .signWith(refreshKey, SignatureAlgorithm.HS256)
         .compact();
   }
 
   /**
    * JWT 토큰으로부터 인증 정보를 조회하는 메소드
    * 
-   * @param token JWT 토큰
+   * @param accessToken JWT 토큰
    * @return 인증 정보
    */
-  public Authentication getAuthentication(String token) {
-    if (!validateToken(token)) {
+  public Authentication getAuthentication(String accessToken) {
+    if (!validateToken(accessToken)) {
       return null;
     }
 
-    Claims claims = jwtParser.parseClaimsJws(token).getBody();
+    Claims claims = accessParser.parseClaimsJws(accessToken).getBody();
     String username = claims.getSubject();
 
     // UserDetailsService를 사용하여 사용자 정보 로드
@@ -138,32 +150,16 @@ public class JsonWebTokenProvider {
   /**
    * 토큰의 유효성을 검증하는 메소드
    * 
-   * @param authToken 검증할 JWT 토큰
+   * @param accessToken 검증할 JWT 토큰
    * @return 유효성 검사 결과
    */
-  public boolean validateToken(String authToken) {
+  public boolean validateToken(String accessToken) {
 
     try {
-      jwtParser.parseClaimsJws(authToken);
+      accessParser.parseClaimsJws(accessToken);
       return true;
     } catch (JwtException | IllegalArgumentException e) {
       log.info("유효하지 않은 JWT 토큰입니다: {}", e.getMessage());
-    }
-    return false;
-  }
-
-  /**
-   * Refresh Token의 유효성을 검증하는 메소드
-   * 
-   * @param refreshToken 검증할 Refresh Token
-   * @return 유효성 검사 결과
-   */
-  public boolean validateRefreshToken(String refreshToken) {
-    try {
-      jwtParser.parseClaimsJws(refreshToken);
-      return true;
-    } catch (JwtException | IllegalArgumentException e) {
-      log.info("유효하지 않은 Refresh Token입니다: {}", e.getMessage());
     }
     return false;
   }
@@ -174,9 +170,13 @@ public class JsonWebTokenProvider {
    * @param refreshToken Refresh Token
    * @return 생성된 Access Token
    */
-  public String createTokenFromRefreshToken(String refreshToken) {
-    Claims claims = jwtParser.parseClaimsJws(refreshToken).getBody();
+  public String createAccessTokenFromRefreshToken(String refreshToken) {
+    Claims claims = refreshParser.parseClaimsJws(refreshToken).getBody();
     String username = claims.getSubject();
+
+    if (!refreshTokenStore.validateRefreshToken(username, refreshToken)) {
+      return null;
+    }
 
     // 사용자 정보 로드
     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -187,13 +187,13 @@ public class JsonWebTokenProvider {
   }
 
   /**
-   * 토큰의 남은 유효 시간 (밀리초 단위) 반환
+   * 토큰의 남은 유효 시간 (밀리초 단위) 반���
    * 
-   * @param token JWT 토큰
+   * @param accessToken JWT 토큰
    * @return 남은 유효 시간
    */
-  public long getExpiration(String token) {
-    Claims claims = jwtParser.parseClaimsJws(token).getBody();
+  public long getExpiration(String accessToken) {
+    Claims claims = accessParser.parseClaimsJws(accessToken).getBody();
     Date expiration = claims.getExpiration();
     return expiration.getTime() - new Date().getTime();
   }
@@ -205,7 +205,7 @@ public class JsonWebTokenProvider {
    * @return 남은 유효 시간
    */
   public long getRefreshTokenExpiration(String refreshToken) {
-    Claims claims = jwtParser.parseClaimsJws(refreshToken).getBody();
+    Claims claims = refreshParser.parseClaimsJws(refreshToken).getBody();
     Date expiration = claims.getExpiration();
     return expiration.getTime() - new Date().getTime();
   }
@@ -223,7 +223,7 @@ public class JsonWebTokenProvider {
             .findFirst()
             .map(Cookie::getValue))
         .filter(this::validateToken)
-        .map(token -> jwtParser.parseClaimsJws(token).getBody().getSubject());
+        .map(token -> accessParser.parseClaimsJws(token).getBody().getSubject());
   }
 
   /**
@@ -254,5 +254,29 @@ public class JsonWebTokenProvider {
     deleteCookie.setHttpOnly(true);
     deleteCookie.setMaxAge(0);
     response.addCookie(deleteCookie);
+  }
+
+  public String getAccessTokenFromRequest(HttpServletRequest request) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+        for (Cookie cookie : cookies) {
+            if (AUTHORIZATION_HEADER_ACCESS.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+    }
+    return null;
+  }
+
+  public String getRefreshTokenFromRequest(HttpServletRequest request) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+        for (Cookie cookie : cookies) {
+            if (AUTHORIZATION_HEADER_REFRESH.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+    }
+    return null;
   }
 }

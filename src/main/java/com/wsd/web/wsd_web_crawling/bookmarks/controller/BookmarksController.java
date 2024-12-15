@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.wsd.web.wsd_web_crawling.bookmarks.dto.BookmarksResponse;
 import com.wsd.web.wsd_web_crawling.bookmarks.service.BookmarksService;
 import com.wsd.web.wsd_web_crawling.common.dto.Response;
 
@@ -38,10 +37,8 @@ public class BookmarksController {
   @GetMapping
   public ResponseEntity<Response<?>> readBookmark(HttpServletRequest request) {
     // Service에서 DTO를 직접 받아옴
-    BookmarksResponse response = bookmarksService.readBookmark(request);
-
-    Response<BookmarksResponse> body = Response.createResponse(HttpStatus.OK.value(), "북마크 조회 성공", response);
-    return new ResponseEntity<>(body, HttpStatus.OK);
+    Response<?> response = bookmarksService.readBookmark(request);
+    return new ResponseEntity<>(response, HttpStatus.valueOf(response.getStatus()));
   }
 
   @PostMapping("/{post_id}")
@@ -49,9 +46,8 @@ public class BookmarksController {
       @PathVariable("post_id") @Parameter(description = "북마크에 추가할 공고 ID", required = true, example = "32") Long postId,
       HttpServletRequest request) {
 
-    BookmarksResponse response = bookmarksService.addPostingIntoBookmark(postId, request);
-    Response<?> body = Response.createResponse(HttpStatus.OK.value(), "북마크 추가 성공", response);
-    return new ResponseEntity<>(body, HttpStatus.OK);
+    Response<?> response = bookmarksService.addPostingIntoBookmark(postId, request);
+    return new ResponseEntity<>(response, HttpStatus.valueOf(response.getStatus()));
   }
 
   @DeleteMapping("/{post_id}")
@@ -59,9 +55,8 @@ public class BookmarksController {
       @PathVariable("post_id") @Parameter(description = "북마크에서 제거할 공고 ID", required = true, example = "32") Long postId,
       HttpServletRequest request) {
 
-    BookmarksResponse response = bookmarksService.removePostingFromBookmark(postId, request);
-    Response<?> body = Response.createResponse(HttpStatus.OK.value(), "북마크 제거 성공", response);
-    return new ResponseEntity<>(body, HttpStatus.OK);
+    Response<?> response = bookmarksService.removePostingFromBookmark(postId, request);
+    return new ResponseEntity<>(response, HttpStatus.valueOf(response.getStatus()));
   }
 
 }
