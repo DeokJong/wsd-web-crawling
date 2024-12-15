@@ -20,7 +20,7 @@ public class AccountUpdateRequest {
    * 바꿀 비밀번호
    */
   @NotBlank
-  @Schema(description = "바꿀 비밀번호", example = "test12345")
+  @Schema(description = "바꿀 비밀번호", example = "Password12345!")
   private String password;
 
   /**

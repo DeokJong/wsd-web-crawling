@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -44,6 +45,31 @@ public class GlobalControllerAdvice {
 
     return new ResponseEntity<>(Response.createResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage(), errors),
         HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Response<?>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    log.error("MethodArgumentNotValidException occurred in {}  {}  {}  {}  {}  {}  {}", 
+              e.getClass().getSimpleName(), 
+              e.getMessage(), 
+              e.getStackTrace()[0].toString(),
+              e.getStackTrace()[1].toString(),
+              e.getStackTrace()[2].toString(),
+              e.getStackTrace()[3].toString(),
+              e.getStackTrace()[4].toString());
+
+    List<FieldErrorResponse> errors = e.getBindingResult().getFieldErrors().stream()
+        .map(fieldError -> new FieldErrorResponse(fieldError.getField(), fieldError.getCode(),
+            fieldError.getDefaultMessage())
+        ).toList();
+
+    String defaultMessage = e.getBindingResult().getFieldErrors().stream()
+        .map(fieldError -> fieldError.getDefaultMessage())
+        .findFirst()
+        .orElse(e.getMessage());
+
+    return new ResponseEntity<>(Response.createResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), defaultMessage, errors),
+        HttpStatus.UNPROCESSABLE_ENTITY);
   }
 
   /**

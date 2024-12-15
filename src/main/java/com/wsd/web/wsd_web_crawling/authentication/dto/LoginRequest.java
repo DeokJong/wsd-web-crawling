@@ -1,6 +1,7 @@
 package com.wsd.web.wsd_web_crawling.authentication.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,13 +21,14 @@ public class LoginRequest {
    * 사용자 아이디
    */
   @NotBlank
-  @Schema(description = "아이디", example = "test")
+  @Schema(description = "아이디", example = "test@test.com")
+  @Email
   private String username;
 
   /**
    * 사용자 비밀번호
    */
   @NotBlank
-  @Schema(description = "비밀번호", example = "test1234")
+  @Schema(description = "비밀번호", example = "Password1234!")
   private String password;
 }
