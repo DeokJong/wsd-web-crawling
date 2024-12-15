@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.wsd.web.wsd_web_crawling.authentication.components.JsonWebTokenProvider;
 import com.wsd.web.wsd_web_crawling.authentication.components.RefreshTokenStore;
@@ -49,7 +48,7 @@ public class AuthService {
    * @param response     HTTP 응답 객체
    * @throws AuthenticationException 인증 실패 시 발생
    */
-  public void login(LoginRequest loginRequest, HttpServletResponse response) {
+  public Response<?> login(LoginRequest loginRequest, HttpServletResponse response) {
     try {
       Authentication authentication = authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(
@@ -68,6 +67,8 @@ public class AuthService {
     } catch (AuthenticationException e) {
       throw e;
     }
+
+    return Response.createResponseWithoutData(HttpStatus.OK.value(), "로그인 성공");
   }
 
   /**
@@ -75,9 +76,15 @@ public class AuthService {
    *
    * @param response HTTP 응답 객체
    */
-  public void logout(HttpServletResponse response) {
+  public Response<?> logout(HttpServletRequest request, HttpServletResponse response) {
+
+    String refreshToken = tokenProvider.getRefreshTokenFromRequest(request);
+    String username = tokenProvider.getUsernameFromRequest(request).orElse(null);
+    refreshTokenStore.deleteRefreshToken(username, refreshToken);
     tokenProvider.deleteCookie(response, tokenProvider.AUTHORIZATION_HEADER_REFRESH);
     tokenProvider.deleteCookie(response, tokenProvider.AUTHORIZATION_HEADER_ACCESS);
+
+    return Response.createResponseWithoutData(HttpStatus.OK.value(), "로그아웃 성공");
   }
 
   /**
@@ -85,10 +92,10 @@ public class AuthService {
    *
    * @param request 사용자 생성 요청 정보
    */
-  public void register(AccountCreateRequest request) {
+  public Response<?> register(AccountCreateRequest request) {
 
     if (accountRepository.existsByUsername(request.getUsername())) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 존재하는 사용자입니다.");
+      return Response.createResponseWithoutData(HttpStatus.CONFLICT.value(), "이미 존재하는 사용자입니다.");
     }
 
     Account account = accountRepository.save(Account.builder()
@@ -101,6 +108,8 @@ public class AuthService {
         .account(account)
         .jobPostings(null)
         .build());
+
+    return Response.createResponseWithoutData(HttpStatus.OK.value(), "회원가입 성공");
   }
 
   /**
@@ -130,13 +139,13 @@ public class AuthService {
    * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우 발생
    */
   @Transactional
-  public void updateProfile(AccountUpdateRequest updateRequest, HttpServletRequest request, HttpServletResponse response) {
+  public Response<?> updateProfile(AccountUpdateRequest updateRequest, HttpServletRequest request, HttpServletResponse response) {
     String username = tokenProvider.getUsernameFromRequest(request).orElse(null);
     Account account = accountRepository.findByUsername(username)
         .orElse(null);
 
     if (account == null) {
-      throw new UsernameNotFoundException("User not found");
+      return Response.createResponseWithoutData(HttpStatus.NOT_FOUND.value(), "사용자를 찾을 수 없습니다.");
     }
 
     if (updateRequest.getPassword() != null) {
@@ -148,6 +157,8 @@ public class AuthService {
     }
 
     accountRepository.save(account);
+
+    return Response.createResponseWithoutData(HttpStatus.OK.value(), "프로필 업데이트 성공");
   }
 
   public Account getCurrentAccount() {

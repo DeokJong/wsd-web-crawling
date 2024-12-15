@@ -51,12 +51,11 @@ public class AuthContoller {
    * @return 로그아웃 성공 응답
    */
   @PostMapping("/logout")
-  public ResponseEntity<Response<?>> logout(HttpServletResponse response) {
+  public ResponseEntity<Response<?>> logout(HttpServletRequest request, HttpServletResponse httpResponse) {
 
-    authService.logout(response);
+    Response<?> response = authService.logout(request, httpResponse);
 
-    Response<?> body = Response.createResponseWithoutData(HttpStatus.NO_CONTENT.value(), "로그아웃 성공");
-    return new ResponseEntity<>(body, HttpStatus.OK);
+    return new ResponseEntity<>(response, HttpStatus.valueOf(response.getStatus()));
   }
 
   /**
@@ -68,12 +67,11 @@ public class AuthContoller {
    */
   @PostMapping("/register")
   public ResponseEntity<Response<?>> signup(@RequestBody @Valid AccountCreateRequest request,
-      HttpServletResponse response) {
+      HttpServletResponse httpResponse) {
 
-    authService.register(request);
+    Response<?> response = authService.register(request);
 
-    Response<?> body = Response.createResponseWithoutData(200, "회원가입 성공");
-    return new ResponseEntity<>(body, HttpStatus.OK);
+    return new ResponseEntity<>(response, HttpStatus.valueOf(response.getStatus()));
   }
 
   /**

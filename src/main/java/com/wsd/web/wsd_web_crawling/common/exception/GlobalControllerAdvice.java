@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -139,5 +140,16 @@ public class GlobalControllerAdvice {
               e.getStackTrace()[4].toString());
     return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.NOT_FOUND.value(), e.getMessage()),
         HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Response<?>> handleAuthenticationException(BadCredentialsException e) {
+    log.error("AuthenticationException occurred in {}  {}  {}  {}  {}  {}", 
+              e.getClass().getSimpleName(), 
+              e.getMessage(), 
+              e.getStackTrace()[0].toString(),
+              e.getStackTrace()[1].toString(),
+              e.getStackTrace()[2].toString());
+    return new ResponseEntity<>(Response.createResponseWithoutData(HttpStatus.UNAUTHORIZED.value(), e.getMessage()), HttpStatus.UNAUTHORIZED);
   }
 }
