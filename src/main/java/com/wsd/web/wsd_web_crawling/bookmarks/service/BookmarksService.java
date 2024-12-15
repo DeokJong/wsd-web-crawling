@@ -1,5 +1,6 @@
 package com.wsd.web.wsd_web_crawling.bookmarks.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,12 @@ public class BookmarksService {
 @Transactional
 public BookmarksResponse readBookmark(HttpServletRequest request) {
     Bookmark bookmark = getBookmarkByRequest(request);
+
+    if (bookmark.getJobPostings() == null) {
+      return BookmarksResponse.builder()
+        .jobPostingDetailResponses(Collections.emptyList())
+        .build();
+    }
 
     // 트랜잭션 범위 내에서 jobPostings 접근 및 DTO 변환
     List<JobPostingDetailResponse> jobPostingDetailResponses = bookmark.getJobPostings().stream()
@@ -95,11 +102,15 @@ public BookmarksResponse readBookmark(HttpServletRequest request) {
       () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계정을 찾을 수 없습니다.")
     );
 
-    Bookmark bookmark = bookmarkRepository.findByAccountId(account.getId()).orElseThrow(
-      () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "북마크를 찾을 수 없습니다.")
-    );
-    log.debug("account: {}", account);
-    log.debug("bookmark: {}", bookmark);
+    Bookmark bookmark = bookmarkRepository.findByAccountId(account.getId()).orElse(null);
+
+    if (bookmark == null) {
+      bookmark = Bookmark.builder()
+        .account(account)
+        .build();
+      bookmarkRepository.save(bookmark);
+    }
+
     return bookmark;
   }
 }

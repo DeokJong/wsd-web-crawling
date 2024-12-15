@@ -17,7 +17,6 @@ import java.util.List;
 @Builder
 @EqualsAndHashCode(callSuper = false)
 public class BookmarksResponse extends BaseDto {
-  private Long id;
   private List<JobPostingDetailResponse> jobPostingDetailResponses;
 
 }
